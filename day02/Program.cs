@@ -12,5 +12,5 @@ bool IsSafe2(IEnumerable<int> a) =>
         .Any(i => IsSafe1(a.Take(i).Concat(a.Skip(i + 1))));
 
 bool IsSafe(IEnumerable<int> b) =>
-    b.All(x => x is >= -3 and <= -1) ||
-    b.All(x => x is >= 1 and <= 3);
+    b.All(x => x >= -3 && x <= -1) ||
+    b.All(x => x >= 1 && x <= 3);
