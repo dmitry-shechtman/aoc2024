@@ -1,19 +1,18 @@
 ﻿var input = File.ReadAllText("input.txt");
-Console.WriteLine(Part1(input));
-Console.WriteLine(Part2(input));
+Console.WriteLine(Part1());
+Console.WriteLine(Part2());
 
-int Part1(string input) =>
-    EnumValues(input, @"mul\((\d+),(\d+)\)")
-        .Sum(Parse);
+int Part1() =>
+    Solve(@"mul\((\d+),(\d+)\)");
 
-int Part2(string input) =>
-    EnumValues(input, @"mul\((\d+),(\d+)\)|do\(\)|don't\(\)")
-        .Aggregate((true, v: 0), Parse2).v;
+int Part2() =>
+    Solve(@"mul\((\d+),(\d+)\)|do\(\)|don't\(\)");
 
-IEnumerable<string[]> EnumValues(string s, string p) =>
-    Regex.Matches(s, p)
+int Solve(string p) =>
+    Regex.Matches(input, p)
         .Cast<Match>()
-        .Select(GetValues);
+        .Select(GetValues)
+        .Aggregate((true, v: 0), Parse2).v;
 
 string[] GetValues(Match match) =>
     match.Groups
