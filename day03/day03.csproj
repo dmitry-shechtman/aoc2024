@@ -8,6 +8,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\aoc\aoc\aoc.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Using Include="System.Text.RegularExpressions" />
   </ItemGroup>
 

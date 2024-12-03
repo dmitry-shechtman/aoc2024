@@ -15,7 +15,6 @@ int Solve(string p) =>
 
 string[] GetValues(Match match) =>
     match.Groups
-        .Cast<Group>()
         .Select(g => g.Value)
         .ToArray();
 
