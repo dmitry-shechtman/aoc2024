@@ -10,7 +10,6 @@ int Part2() =>
 
 int Solve(string p) =>
     Regex.Matches(input, p)
-        .Cast<Match>()
         .Select(GetValues)
         .Aggregate((true, v: 0), Parse2).v;
 
