@@ -1,4 +1,6 @@
-﻿var input = File.ReadAllText("input.txt")
+﻿using aoc;
+
+var input = File.ReadAllText("input.txt")
     .Trim().Split("\n\n");
 
 var rr = Split(input[0], '|')
@@ -20,10 +22,8 @@ int Solve(Func<int[], bool> p) =>
 
 bool Sort(int[] u)
 {
-    var v = false;
-    for (int i = 0; i < u.Length; i++)
-        for (int j = i + 1; j < u.Length; j++)
-            if (!rr.Contains((u[i], u[j])))
-                (u[i], u[j], v) = (u[j], u[i], true);
-    return v;
+    if (u.All((x, i) => u[(i + 1)..].All(y => rr.Contains((x, y)))))
+        return false;
+    u.Sort((x, y) => rr.Contains((x, y)) ? -1 : 1);
+    return true;
 }
