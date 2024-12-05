@@ -8,10 +8,10 @@ Console.WriteLine(Solve(MooreGrid.Headings
     .Select(h =>
         new[] { new[] { -h, h, h * 2 } })));
 
-Console.WriteLine(Solve(DiagGrid.Headings
-    .SelectMany((g, i) =>
-        DiagGrid.Headings[..i].Select(h =>
-            new[] { new[] { g, -g }, new[] { h, -h } }))));
+var hh2 = DiagGrid.Headings;
+Console.WriteLine(Solve(hh2
+    .Zip(hh2.Prepend(hh2[^1]), (h, g) =>
+        new[] { new[] { g, -g }, new[] { h, -h } })));
 
 int Solve(IEnumerable<Vector[][]> hhhh) => m[3].Sum(p =>
     hhhh.Count(hhh =>
