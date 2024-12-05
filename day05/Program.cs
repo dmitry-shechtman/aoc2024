@@ -7,23 +7,19 @@ var rr = Split(input[0], '|')
     .Select(t => (t[0], t[1]))
     .ToHashSet();
 
-var uu = Split(input[1], ',');
+var pp = new int[2];
+foreach (var u in Split(input[1], ','))
+{
+    var i = u.All((x, i) =>
+        u[(i + 1)..].All(y =>
+            rr.Contains((x, y)))) ? 0 : 1;
+    u.Sort((x, y) => rr.Contains((x, y)) ? -1 : 1);
+    pp[i] += u[u.Length / 2];
+}
 
-Console.WriteLine(Solve(u => !Sort(u)));
-Console.WriteLine(Solve(Sort));
+Console.WriteLine(pp[0]);
+Console.WriteLine(pp[1]);
 
 IEnumerable<int[]> Split(string s, char c) =>
     s.Split('\n').Select(t =>
         t.Split(c).Select(int.Parse).ToArray());
-
-int Solve(Func<int[], bool> p) =>
-    uu.Where(p)
-        .Sum(u => u[u.Length / 2]);
-
-bool Sort(int[] u)
-{
-    if (u.All((x, i) => u[(i + 1)..].All(y => rr.Contains((x, y)))))
-        return false;
-    u.Sort((x, y) => rr.Contains((x, y)) ? -1 : 1);
-    return true;
-}
