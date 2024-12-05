@@ -10,9 +10,8 @@ var rr = Split(input[0], '|')
 var pp = new int[2];
 foreach (var u in Split(input[1], ','))
 {
-    var i = u.All((x, i) =>
-        u[(i + 1)..].All(y =>
-            rr.Contains((x, y)))) ? 0 : 1;
+    var i = u.Zip(u[1..], (x, y) =>
+        rr.Contains((x, y))).All(b => b) ? 0 : 1;
     u.Sort((x, y) => rr.Contains((x, y)) ? -1 : 1);
     pp[i] += u[u.Length / 2];
 }
