@@ -8,7 +8,7 @@ Console.WriteLine(Solve(Init1()));
 Console.WriteLine(Solve(Init2()));
 
 Vector[][][] Init1() => MooreGrid.Headings
-    .Select(h => "SAMX".Select((_, i) => new[] { h * i }).ToArray())
+    .Select(h => "SAMX".Select((_, i) => new[] { h * (i - 1) }).ToArray())
     .ToArray();
 
 Vector[][][] Init2() => DiagGrid.Headings
@@ -17,7 +17,7 @@ Vector[][][] Init2() => DiagGrid.Headings
             new[] { new[] { g, h }, new[] { Vector.Zero }, new[] { -g, -h }}))
     .ToArray();
 
-int Solve(Vector[][][] hhhh) => m[^1].Sum(p =>
+int Solve(Vector[][][] hhhh) => m[1].Sum(p =>
     hhhh.Count(hhh =>
         hhh.Zip(m, (hh, g) =>
             hh.All(h =>
