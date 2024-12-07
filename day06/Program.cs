@@ -6,23 +6,24 @@ var g = Parse(s);
 var r = VectorRange.FromField(s);
 var o = Vector.FindChar(s, '^');
 
-HashSet<Vector> qq;
-HashSet<Vector3D> rr;
-Walk(g);
+Dictionary<Vector, int> qq = new();
+Walk(g, o, 0, qq);
 
 Console.WriteLine(qq.Count);
-Console.WriteLine(qq.Count(IsLoop));
+Console.WriteLine(qq.ToArray()[1..]
+    .AsParallel()
+    .Count(IsLoop));
 
-bool Walk(HashSet<Vector> pp)
+bool Walk(HashSet<Vector> pp, Vector p, int k, Dictionary<Vector, int>? qq)
 {
-    (qq, rr) = (new(), new());
-    for (var (p, k) = (o, 0); r.Contains(p); p += Headings[k])
+    HashSet<(Vector, int)> rr = new();
+    for (; r.Contains(p); p += Headings[k])
         if (!pp.Contains(p))
-            qq.Add(p);
+            qq?.TryAdd(p, k);
         else if (!rr.Add((p, k) = (p - Headings[k], (k + 1) & 3)))
             return true;
     return false;
 }
 
-bool IsLoop(Vector q) =>
-    Walk(new(g.Append(q)));
+bool IsLoop(KeyValuePair<Vector, int> t) =>
+    Walk(new(g.Append(t.Key)), t.Key, t.Value, null);
