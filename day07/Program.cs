@@ -12,7 +12,9 @@ long Solve(int p) =>
     vv.AsParallel().Sum(t => IsMatch(t.v[0], t, 1, p + 1) ? t.z : 0);
 
 bool IsMatch(long a, (long z, long[] v) t, int k, int n) =>
-    k < t.v.Length ? IsMatch2(a, t, k, n) : t.z == a;
+    k < t.v.Length
+        ? t.z >= a && IsMatch2(a, t, k, n)
+        : t.z == a;
 
 bool IsMatch2(long a, (long z, long[] v) t, int k, int n)
 {
