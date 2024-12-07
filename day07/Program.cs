@@ -2,33 +2,33 @@
     .Select(s => s.Split(": "))
     .Select(ParseOne);
 
-Console.WriteLine(Solve(Enum1));
-Console.WriteLine(Solve(Enum2));
+Console.WriteLine(Solve(1));
+Console.WriteLine(Solve(2));
 
 (long z, long[] v) ParseOne(string[] tt) =>
     (long.Parse(tt[0]), tt[1].Split(' ').Select(long.Parse).ToArray());
 
-long Solve(Func<long, long, IEnumerable<long>> f) =>
-    vv.AsParallel().Sum(t => EnumAll(t, f, t.v.Length - 1).Contains(t.z) ? t.z : 0);
+long Solve(int p) =>
+    vv.AsParallel().Sum(t => IsMatch(t.v[0], t, 1, p + 1) ? t.z : 0);
 
-IEnumerable<long> EnumAll((long z, long[] v) t, Func<long, long, IEnumerable<long>> f, int i) =>
-    i == 0
-        ? EnumOne(t.v[i])
-        : EnumAll(t, f, i - 1).SelectMany(x => f(x, t.v[i]));
+bool IsMatch(long a, (long z, long[] v) t, int k, int n) =>
+    k < t.v.Length ? IsMatch2(a, t, k, n) : t.z == a;
 
-IEnumerable<long> EnumOne(long x)
+bool IsMatch2(long a, (long z, long[] v) t, int k, int n)
 {
-    yield return x;
+    for (int i = 0; i < n; i++)
+        if (IsMatch(Calc(a, t, k, i), t, k + 1, n))
+            return true;
+    return false;
 }
 
-IEnumerable<long> Enum1(long x, long y)
+long Calc(long a, (long z, long[] v) t, int k, int i) => i switch
 {
-    yield return x + y;
-    yield return x * y;
-}
-
-IEnumerable<long> Enum2(long x, long y) =>
-    Enum1(x, y).Append(Concat(x, y));
+    0 => a + t.v[k],
+    1 => a * t.v[k],
+    2 => Concat(a, t.v[k]),
+    _ => throw new NotImplementedException()
+};
 
 long Concat(long x, long y)
 {
