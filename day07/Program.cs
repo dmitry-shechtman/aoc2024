@@ -1,57 +1,52 @@
-﻿var vv = File.ReadAllLines("input.txt")
+﻿var Pow10 = new[] { 10, 100, 1000, 10000 };
+
+var vv = File.ReadAllLines("input.txt")
     .Select(ParseOne);
 
 Console.WriteLine(Solve(1));
 Console.WriteLine(Solve(2));
 
-List<long> ParseOne(string t)
+(long v, int l)[] ParseOne(string s)
 {
-    var l = 0L;
-    var i = 0;
-    for (; t[i] != ':'; ++i)
-        l = l * 10 + t[i] - '0';
-    var v = new List<long>() { l };
-    for ((i, l) = (i + 2, 0); i < t.Length; ++i)
+    var t = new (long v, int l)[16];
+    long z = 0L, l = 0L;
+    int i = 1, j = 0, k = 0;
+    for (; s[j] != ':'; ++j)
+        z = z * 10 + s[j] - '0';
+    for (j += 2, k = j; k < s.Length; ++k)
     {
-        if (t[i] == ' ')
+        if (s[k] == ' ')
         {
-            v.Add(l);
+            t[i++] = (l, k - j - 1);
+            j = k + 1;
             l = 0L;
         }
         else
         {
-            l = l * 10 + t[i] - '0';
+            l = l * 10 + s[k] - '0';
         }
     }
-    v.Add(l);
-    return v;
+    t[i++] = (l, k - j - 1);
+    t[0] = (z, i);
+    return t;
 }
 
 long Solve(int p) =>
-    vv.AsParallel().Sum(t => IsMatch(t[1], t, 2, p + 1) ? t[0] : 0);
+    vv.AsParallel().Sum(t => IsMatch(t[1].v, t, 2, p + 1) ? t[0].v : 0);
 
-bool IsMatch(long a, List<long> t, int k, int n)
+bool IsMatch(long a, ReadOnlySpan<(long v, int l)> t, int k, int n)
 {
-    if (k == t.Count)
-        return t[0] == a;
-    if (t[0] < a)
+    if (k == t[0].l)
+        return t[0].v == a;
+    if (t[0].v < a)
         return false;
     for (int i = 0; i < n; ++i)
     {
         if (IsMatch(i switch
         {
-            0 => a + t[k],
-            1 => a * t[k],
-            2 => t[k] switch
-            {
-                < 10 => a * 10 + t[k],
-                < 100 => a * 100 + t[k],
-                < 1000 => a * 1000 + t[k],
-                < 10000 => a * 10000 + t[k],
-                < 100000 => a * 100000 + t[k],
-                < 1000000 => a * 1000000 + t[k],
-                _ => throw new InvalidOperationException()
-            },
+            0 => a + t[k].v,
+            1 => a * t[k].v,
+            2 => a * Pow10[t[k].l] + t[k].v,
             _ => throw new NotImplementedException()
         }, t, k + 1, n))
         {
