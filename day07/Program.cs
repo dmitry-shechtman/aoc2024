@@ -26,21 +26,27 @@ Console.WriteLine(Solve(2));
             l = l * 10 + s[k] - '0';
         }
     }
-    t[i++] = (l, k - j - 1);
+    t[i] = (l, k - j - 1);
     t[0] = (z, i);
     return t;
 }
 
 long Solve(int p) =>
-    vv.AsParallel().Sum(t => IsMatch(t[1].v, t, 2, p + 1) ? t[0].v : 0);
+    vv.AsParallel().Sum(t => IsMatch(t[1].v, t, 2, p) ? t[0].v : 0);
 
-bool IsMatch(long a, ReadOnlySpan<(long v, int l)> t, int k, int n)
+bool IsMatch(long a, (long v, int l)[] t, int k, int p)
 {
-    if (k == t[0].l)
-        return t[0].v == a;
     if (t[0].v < a)
+    {
         return false;
-    for (int i = 0; i < n; ++i)
+    }
+    if (k == t[0].l)
+    {
+        return t[0].v == a + t[k].v
+            || t[0].v == a * t[k].v
+            || p == 2 && t[0].v == a * Pow10[t[k].l] + t[k].v;
+    }
+    for (int i = 0; i <= p; ++i)
     {
         if (IsMatch(i switch
         {
@@ -48,7 +54,7 @@ bool IsMatch(long a, ReadOnlySpan<(long v, int l)> t, int k, int n)
             1 => a * t[k].v,
             2 => a * Pow10[t[k].l] + t[k].v,
             _ => throw new NotImplementedException()
-        }, t, k + 1, n))
+        }, t, k + 1, p))
         {
             return true;
         }
