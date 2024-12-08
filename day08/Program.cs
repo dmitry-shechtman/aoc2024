@@ -16,6 +16,6 @@ int Solve(int start, int count) => m[..^1]
             .Select(b => (b, v: b - a))
             .SelectMany(t => Enumerable.Range(start, count)
                 .Select(i => t.b + t.v * i)
-                .Where(r.Contains))))
+                .TakeWhile(r.Contains))))
     .Distinct()
     .Count();
