@@ -9,14 +9,9 @@ int Part2() =>
     Solve(@"mul\((\d+),(\d+)\)|do\(\)|don't\(\)");
 
 int Solve(string p) =>
-    Regex.Matches(input, p)
-        .Select(GetValues)
+    new Regex(p)
+        .SelectStringsMany(input)
         .Aggregate((true, v: 0), Parse2).v;
-
-string[] GetValues(Match match) =>
-    match.Groups
-        .Select(g => g.Value)
-        .ToArray();
 
 int Parse(string[] ss) =>
     int.Parse(ss[1]) * int.Parse(ss[2]);
