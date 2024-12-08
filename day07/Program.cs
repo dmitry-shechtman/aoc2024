@@ -1,12 +1,25 @@
 ﻿var vv = File.ReadAllLines("input.txt")
-    .Select(s => s.Split(": "))
     .Select(ParseOne);
 
 Console.WriteLine(Solve(1));
 Console.WriteLine(Solve(2));
 
-(long z, long[] v) ParseOne(string[] tt) =>
-    (long.Parse(tt[0]), tt[1].Split(' ').Select(long.Parse).ToArray());
+(long z, long[] v) ParseOne(string t)
+{
+    var z = 0L;
+    var j = 0;
+    for (; t[j] != ':'; j++)
+        z = z * 10 + t[j] - '0';
+    var v = new long[t.Count(c => c == ' ')];
+    var l = 0L;
+    for ((var i, j) = (0, j + 2); j < t.Length; ++j)
+        if (t[j] == ' ')
+            (v[i++], l) = (l, 0L);
+        else
+            l = l * 10 + t[j] - '0';
+    v[^1] = l;
+    return (z, v);
+}
 
 long Solve(int p) =>
     vv.AsParallel().Sum(t => IsMatch(t.v[0], t, 1, p + 1) ? t.z : 0);
