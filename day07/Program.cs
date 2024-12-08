@@ -38,17 +38,19 @@ bool IsMatch(long a, List<long> t, int k, int n)
         {
             0 => a + t[k],
             1 => a * t[k],
-            2 => Concat(a, t[k]),
+            2 => t[k] switch
+            {
+                < 10 => a * 10 + t[k],
+                < 100 => a * 100 + t[k],
+                < 1000 => a * 1000 + t[k],
+                < 10000 => a * 10000 + t[k],
+                < 100000 => a * 100000 + t[k],
+                < 1000000 => a * 1000000 + t[k],
+                _ => throw new InvalidOperationException()
+            },
             _ => throw new NotImplementedException()
         }, t, k + 1, n))
             return true;
     }
     return false;
-}
-
-long Concat(long x, long y)
-{
-    for (var z = y; z > 0; z /= 10)
-        x *= 10;
-    return x + y;
 }
