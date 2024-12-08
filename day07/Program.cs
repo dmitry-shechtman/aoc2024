@@ -24,13 +24,12 @@ long[] ParseOne(string t)
 long Solve(int p) =>
     vv.AsParallel().Sum(t => IsMatch(t[1], t, 2, p + 1) ? t[0] : 0);
 
-bool IsMatch(long a, long[] t, int k, int n) =>
-    k < t.Length
-        ? t[0] >= a && IsMatch2(a, t, k, n)
-        : t[0] == a;
-
-bool IsMatch2(long a, long[] t, int k, int n)
+bool IsMatch(long a, long[] t, int k, int n)
 {
+    if (k == t.Length)
+        return t[0] == a;
+    if (t[0] < a)
+        return false;
     for (int i = 0; i < n; i++)
     {
         if (IsMatch(i switch
