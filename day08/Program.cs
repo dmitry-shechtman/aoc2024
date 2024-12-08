@@ -3,11 +3,10 @@ using aoc.Grids;
 
 var s = File.ReadAllText("input.txt");
 var t = s.Where(char.IsLetterOrDigit).Distinct();
-var m = MultiGrid.Parse(s, t.ToArray());
-var r = VectorRange.FromField(s);
+var m = MultiGrid.Parse(s, t.ToArray(), out var z);
 
 Console.WriteLine(Solve(1, 1));
-Console.WriteLine(Solve(0, Math.Max(r.Width, r.Height)));
+Console.WriteLine(Solve(0, Math.Max(z.Width, z.Height)));
 
 int Solve(int start, int count) => m[..^1]
     .SelectMany(g => g
@@ -16,6 +15,6 @@ int Solve(int start, int count) => m[..^1]
             .Select(b => (b, v: b - a))
             .SelectMany(t => Enumerable.Range(start, count)
                 .Select(i => t.b + t.v * i)
-                .TakeWhile(r.Contains))))
+                .TakeWhile(z.Contains))))
     .Distinct()
     .Count();
