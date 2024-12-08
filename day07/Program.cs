@@ -4,29 +4,31 @@
 Console.WriteLine(Solve(1));
 Console.WriteLine(Solve(2));
 
-long[] ParseOne(string t)
+List<long> ParseOne(string t)
 {
     var l = 0L;
-    var j = 0;
-    for (; t[j] != ':'; j++)
-        l = l * 10 + t[j] - '0';
-    var v = new long[t.Count(c => c == ' ') + 1];
-    v[0] = l;
-    for ((var i, j, l) = (1, j + 2, 0); j < t.Length; ++j)
-        if (t[j] == ' ')
-            (v[i++], l) = (l, 0L);
+    var i = 0;
+    for (; t[i] != ':'; i++)
+        l = l * 10 + t[i] - '0';
+    var v = new List<long>() { l };
+    for ((i, l) = (i + 2, 0); i < t.Length; ++i)
+        if (t[i] == ' ')
+        {
+            v.Add(l);
+            l = 0L;
+        }
         else
-            l = l * 10 + t[j] - '0';
-    v[^1] = l;
+            l = l * 10 + t[i] - '0';
+    v.Add(l);
     return v;
 }
 
 long Solve(int p) =>
     vv.AsParallel().Sum(t => IsMatch(t[1], t, 2, p + 1) ? t[0] : 0);
 
-bool IsMatch(long a, long[] t, int k, int n)
+bool IsMatch(long a, List<long> t, int k, int n)
 {
-    if (k == t.Length)
+    if (k == t.Count)
         return t[0] == a;
     if (t[0] < a)
         return false;
