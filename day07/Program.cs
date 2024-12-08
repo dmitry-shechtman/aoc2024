@@ -32,18 +32,18 @@ bool IsMatch(long a, long[] t, int k, int n) =>
 bool IsMatch2(long a, long[] t, int k, int n)
 {
     for (int i = 0; i < n; i++)
-        if (IsMatch(Calc(a, t, k, i), t, k + 1, n))
+    {
+        if (IsMatch(i switch
+        {
+            0 => a + t[k],
+            1 => a * t[k],
+            2 => Concat(a, t[k]),
+            _ => throw new NotImplementedException()
+        }, t, k + 1, n))
             return true;
+    }
     return false;
 }
-
-long Calc(long a, long[] t, int k, int i) => i switch
-{
-    0 => a + t[k],
-    1 => a * t[k],
-    2 => Concat(a, t[k]),
-    _ => throw new NotImplementedException()
-};
 
 long Concat(long x, long y)
 {
