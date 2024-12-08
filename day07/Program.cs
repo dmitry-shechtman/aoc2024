@@ -8,17 +8,21 @@ List<long> ParseOne(string t)
 {
     var l = 0L;
     var i = 0;
-    for (; t[i] != ':'; i++)
+    for (; t[i] != ':'; ++i)
         l = l * 10 + t[i] - '0';
     var v = new List<long>() { l };
     for ((i, l) = (i + 2, 0); i < t.Length; ++i)
+    {
         if (t[i] == ' ')
         {
             v.Add(l);
             l = 0L;
         }
         else
+        {
             l = l * 10 + t[i] - '0';
+        }
+    }
     v.Add(l);
     return v;
 }
@@ -32,7 +36,7 @@ bool IsMatch(long a, List<long> t, int k, int n)
         return t[0] == a;
     if (t[0] < a)
         return false;
-    for (int i = 0; i < n; i++)
+    for (int i = 0; i < n; ++i)
     {
         if (IsMatch(i switch
         {
@@ -50,7 +54,9 @@ bool IsMatch(long a, List<long> t, int k, int n)
             },
             _ => throw new NotImplementedException()
         }, t, k + 1, n))
+        {
             return true;
+        }
     }
     return false;
 }
