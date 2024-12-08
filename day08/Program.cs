@@ -7,7 +7,7 @@ var m = MultiGrid.Parse(s, t.ToArray());
 var r = VectorRange.FromField(s);
 
 Console.WriteLine(Solve(1, 1));
-Console.WriteLine(Solve(0, Math.Max(r.Max.X, r.Max.Y)));
+Console.WriteLine(Solve(0, Math.Max(r.Width, r.Height)));
 
 int Solve(int start, int count) => m[..^1]
     .SelectMany(g => g
