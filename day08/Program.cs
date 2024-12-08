@@ -2,7 +2,7 @@
 using aoc.Grids;
 
 var s = File.ReadAllText("input.txt");
-var t = s.Where(c => c != '\n' && c != '.').Distinct();
+var t = s.Where(char.IsLetterOrDigit).Distinct();
 var m = MultiGrid.Parse(s, t.ToArray());
 var r = VectorRange.FromField(s);
 
