@@ -32,7 +32,7 @@ long Part2()
         if (d[i] < 0)
             continue;
         for (n = 0; i >= 0 && d[i] == d[i + n]; --i, ++n) ;
-        for (++i, m = 0, j = c[n]; i > j; ++j)
+        for (++i, j = c[n], m = 0; i > j; ++j)
         {
             if (d[j] >= 0)
             {
@@ -49,14 +49,13 @@ long Part2()
     return z;
 }
 
-static void TrySwap(int[] d, ref long z, ref int i, int j, int n = 1)
+void TrySwap(int[] d, ref long z, ref int i, int j, int n = 1)
 {
     if (i <= j)
         return;
-    for (int k = 0; k < n; ++k)
+    for (; n > 0; ++i, --j, --n)
     {
         z += d[i] * (j - i);
-        d[j--] = d[i];
-        d[i++] = -1;
+        (d[i], d[j]) = (-1, d[i]);
     }
 }
