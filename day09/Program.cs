@@ -1,6 +1,7 @@
 ﻿var input = File.ReadAllText("input.txt").Trim()
     .SelectMany((c, i) =>
-        Enumerable.Repeat(i % 2 == 0 ? i / 2 : -1, c - '0'));
+        Enumerable.Repeat(i % 2 == 0 ? i / 2 : -1, c - '0'))
+    .ToArray();
 
 var check = input
     .Select((v, i) => (long)Math.Max(0, v) * i)
@@ -27,7 +28,7 @@ long Part2()
     var c = new int[10];
     Array.Clear(c);
     int i, j, m, n;
-    for (i = d.Length - 1; i >= 0; --i)
+    for (i = d.Length - 1; i > c[1]; --i)
     {
         if (d[i] < 0)
             continue;
