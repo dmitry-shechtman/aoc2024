@@ -4,7 +4,7 @@
     .ToArray();
 
 var check = input
-    .Select((v, i) => (long)Math.Max(0, v) * i)
+    .Select((v, i) => v < 0 ? 0L : v * i)
     .Sum();
 
 Console.WriteLine(Part1());
