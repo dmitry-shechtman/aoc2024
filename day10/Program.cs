@@ -13,6 +13,6 @@ int Part1() => m[0].Sum(p =>
             m[i].GetNeighbors(q).Where(m[i].Contains)))).Count);
 
 int Part2() =>
-    Enumerable.Range(1, 9).Aggregate(m[0].ToArray(), (a, i) =>
+    Enumerable.Range(1, 9).Aggregate(m[0].AsEnumerable(), (a, i) =>
         a.SelectMany(q =>
-            m[i].GetNeighbors(q).Where(m[i].Contains)).ToArray()).Length;
+            m[i].GetNeighbors(q).Where(m[i].Contains))).Count();
