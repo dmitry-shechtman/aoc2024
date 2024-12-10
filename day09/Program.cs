@@ -15,7 +15,8 @@ long Part1()
     var (d, z) = (input.ToArray(), check);
     for (int i = d.Length - 1, j = 0; i > j; --i)
     {
-        for (; d[i] < 0; --i) ;
+        if (d[i] < 0)
+            continue;
         for (; d[j] >= 0; ++j) ;
         TrySwap(d, ref z, ref i, j);
     }
@@ -32,20 +33,11 @@ long Part2()
     {
         if (d[i] < 0)
             continue;
-        for (n = 0; i >= 0 && d[i] == d[i + n]; --i, ++n) ;
-        for (++i, j = c[n], m = 0; i > j; ++j)
-        {
-            if (d[j] >= 0)
-            {
-                m = 0;
-            }
-            else if (++m == n)
-            {
-                c[n] = j + 1;
-                break;
-            }
-        }
-        TrySwap(d, ref z, ref i, j, n);
+        for (n = 1; i >= 0 && d[--i] == d[i + n]; ++n) ;
+        for (++i, j = c[n], m = 0; j <= i && m < n; ++j)
+            m = d[j] >= 0 ? 0 : ++m;
+        c[n] = j;
+        TrySwap(d, ref z, ref i, --j, n);
     }
     return z;
 }
@@ -54,9 +46,7 @@ void TrySwap(int[] d, ref long z, ref int i, int j, int n = 1)
 {
     if (i <= j)
         return;
+    z += (long)(j - i - n + 1) * d[i] * n;
     for (; n > 0; ++i, --j, --n)
-    {
-        z += d[i] * (j - i);
         (d[i], d[j]) = (-1, d[i]);
-    }
 }
