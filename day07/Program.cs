@@ -1,12 +1,11 @@
-﻿var vv = File.ReadAllLines("input.txt")
-    .Select(s => s.Split(": "))
-    .Select(ParseOne);
+﻿using System.Text.RegularExpressions;
+
+var vv = File.ReadAllLines("input.txt")
+    .Select(s => Regex.Split(s, ":? ").Select(long.Parse).ToArray())
+    .Select(tt => (z: tt[0], v: tt[1..]));
 
 Console.WriteLine(Solve(Enum1));
 Console.WriteLine(Solve(Enum2));
-
-(long z, long[] v) ParseOne(string[] tt) =>
-    (long.Parse(tt[0]), tt[1].Split(' ').Select(long.Parse).ToArray());
 
 long Solve(Func<long, long, IEnumerable<long>> f) =>
     vv.AsParallel().Sum(t => EnumAll(t, f, t.v.Length - 1).Contains(t.z) ? t.z : 0);
