@@ -2,8 +2,7 @@
 using aoc.Grids;
 
 var s = File.ReadAllText("input.txt");
-var t = s.Where(char.IsLetter);
-var m = MultiGrid.Parse(s, t.ToArray(), out var z);
+var m = MultiGrid.Parse(s, out var z);
 
 Console.WriteLine(Solve1());
 Console.WriteLine(Solve2());
