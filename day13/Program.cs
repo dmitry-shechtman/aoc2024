@@ -27,8 +27,9 @@ long SolveOne((DoubleMatrix A, DoubleVector b) m)
 {
     long a, b;
     return m.A.Solve(m.b, out var x) &&
-        m.A.C1 * (a = (long)Math.Round(x.X)) +
-        m.A.C2 * (b = (long)Math.Round(x.Y)) == m.b
+        (a = (long)Math.Round(x.X)) >= 0 &&
+        (b = (long)Math.Round(x.Y)) >= 0 &&
+        m.A.C1 * a + m.A.C2 * b == m.b
             ? a * 3 + b
             : 0;
 }
