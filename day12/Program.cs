@@ -2,24 +2,22 @@
 using aoc.Grids;
 
 var s = File.ReadAllText("input.txt");
-var m = MultiGrid.Parse(s, out var z);
+var m = MultiGrid.Parse(s);
 
 Console.WriteLine(Solve1());
 Console.WriteLine(Solve2());
 
 int Solve1() => m[..^1].AsParallel()
-    .Sum(g => new PerimeterWorker(g, z).Count());
+    .Sum(g => new PerimeterWorker(g).Count());
 
 int Solve2() => m[..^1].AsParallel()
-    .Sum(g => new SideWorker(g, z).Count());
+    .Sum(g => new SideWorker(g).Count());
 
-abstract record Worker(Grid Grid, Size Size)
+abstract record Worker(Grid Grid)
 {
     readonly HashSet<Vector> visited = new();
     readonly Queue<Vector> queue = new();
-    readonly List<Dictionary<int, bool[]>> heads = Grid.Headings
-        .Select(_ => new Dictionary<int, bool[]>())
-        .ToList();
+    readonly List<Vector3D> border = new();
 
     public int Count() =>
         Grid.Where(visited.Add).Sum(Count);
@@ -30,37 +28,29 @@ abstract record Worker(Grid Grid, Size Size)
         var cnt = visited.Count;
         queue.Clear();
         queue.Enqueue(p);
-        heads.ForEach(p => p.Clear());
+        border.Clear();
         while (queue.TryDequeue(out var q))
-            for (int i = 0; i < heads.Count; i++)
+            for (int i = 0; i < Grid.Headings.Length; i++)
                 if (!Grid.Contains(r = q + Grid.Headings[i]))
-                    Set(q, i);
+                    border.Add((q, i));
                 else if (visited.Add(r))
                     queue.Enqueue(r);
-        return (visited.Count - cnt + 1) *
-            heads.SelectMany(v => v.Values).Sum(Count);
+        return (visited.Count - cnt + 1) * Count(border);
     }
 
-    void Set(Vector q, int i)
-    {
-        var key   = i % 2 == 0 ? q.Y : q.X;
-        var value = i % 2 == 0 ? q.X : q.Y;
-        if (!heads[i].TryGetValue(key, out var coords))
-            heads[i].Add(key, coords = new bool[i % 2 == 0 ? Size.Height : Size.Width]);
-        coords[value] = true;
-    }
-
-    protected abstract int Count(bool[] coords);
+    protected abstract int Count(List<Vector3D> border);
 }
 
-record PerimeterWorker(Grid Grid, Size Size) : Worker(Grid, Size)
+record PerimeterWorker(Grid Grid) : Worker(Grid)
 {
-    protected override int Count(bool[] coords) =>
-        coords.Count(v => v);
+    protected override int Count(List<Vector3D> border) =>
+        border.Count;
 }
 
-record SideWorker(Grid Grid, Size Size) : Worker(Grid, Size)
+record SideWorker(Grid Grid) : Worker(Grid)
 {
-    protected override int Count(bool[] coords) =>
-        (coords.Zip(coords[1..], (a, b) => a ^ b).Count(v => v) + 1) / 2;
+    protected override int Count(List<Vector3D> border) => border
+        .GroupBy(p => (p.Z % 2 == 0 ? p.Y : p.X) << 2 | p.Z)
+        .Select(g => g.Select(p => p.Z % 2 == 0 ? p.X : p.Y).Order())
+        .Sum(c => c.Zip(c.Skip(1), (x, y) => y > x + 1).Count(v => v) + 1);
 }
