@@ -41,7 +41,7 @@ int Part2()
 {
     Span<Vector4D> qq = stackalloc Vector4D[robots.Length];
     int[,] counts = new int[W, H + 1];
-    int step, total, x, y, i;
+    int step, total, x, y, z, w, i;
     for (i = 0; i < robots.Length; i++)
     {
         qq[i] = (robots[i].m11, robots[i].m12, robots[i].m21, robots[i].m22);
@@ -52,11 +52,12 @@ int Part2()
     {
         for (i = 0; i < robots.Length; i++)
         {
-            --counts[qq[i].x, qq[i].y];
-            (x, y) = ((qq[i].x + qq[i].z) % W, (qq[i].y + qq[i].w) % H);
+            (x, y, z, w) = qq[i];
+            --counts[x, y];
+            (x, y) = ((x + z) % W, (y + w) % H);
             (x, y) = (x < 0 ? x + W : x, y < 0 ? y + H : y);
-            qq[i] = (x, y, qq[i].z, qq[i].w);
-            ++counts[qq[i].x, qq[i].y];
+            qq[i] = (x, y, z, w);
+            ++counts[x, y];
         }
 
         for (total = 0, i = 0; i < qq.Length; i++)
