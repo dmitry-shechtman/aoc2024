@@ -13,7 +13,7 @@ var robots = File.ReadAllLines("input.txt")
     .ToArray();
 
 Console.WriteLine(Part1());
-Console.WriteLine(Part2());
+Console.WriteLine(await Part2Async());
 
 int Part1() => robots
     .Select(Step100)
@@ -37,18 +37,28 @@ Vector4D GetQuadrant(Vector p) => p switch
     _ => default
 };
 
-int Part2()
+async Task<int> Part2Async()
+{
+    var n = Environment.ProcessorCount;
+    return await await Task.WhenAny(Enumerable.Range(0, n)
+        .Select(i => Task.Run(() => Part2(i, n))));
+}
+
+int Part2(int step, int n)
 {
     Span<Vector4D> qq = stackalloc Vector4D[robots.Length];
     int[,] counts = new int[W, H + 1];
-    int step, total, x, y, i;
+    int total, x, y, i;
+    Vector p, v;
     for (i = 0; i < robots.Length; i++)
     {
-        qq[i] = (robots[i].m11, robots[i].m12, robots[i].m21, robots[i].m22);
+        (p, v) = robots[i];
+        (x, y) = (p + v * step) % size;
+        qq[i] = (x < 0 ? x + W : x, y < 0 ? y + H : y, robots[i].m21 * n, robots[i].m22 * n);
         ++counts[qq[i].x, qq[i].y];
     }
 
-    for (step = 0, total = 0; total < robots.Length / 2; ++step)
+    for (total = 0; total < robots.Length / 2; step += n)
     {
         for (i = 0; i < robots.Length; i++)
         {
