@@ -3,7 +3,7 @@ using System.Text.RegularExpressions;
 
 Regex regex = new(@"^p=(\d+),(\d+) v=(-?\d+),(-?\d+)$");
 
-const int W = 101, H = 103;
+const int W = 101, H = 103, RUN = 10;
 Vector size = new(W, H);
 Vector half = size / 2;
 
@@ -41,16 +41,16 @@ int Part2()
 {
     Span<Vector4D> qq = stackalloc Vector4D[robots.Length];
     int[,] counts = new int[W, H + 1];
-    int step, total, x, y, z, w, i;
-    for (i = 0; i < robots.Length; i++)
+    int step, total, run, x, y, z, w, i;
+    for (i = 0; i < robots.Length; ++i)
     {
         qq[i] = (robots[i].m11, robots[i].m12, robots[i].m21, robots[i].m22);
         ++counts[qq[i].x, qq[i].y];
     }
 
-    for (step = 0, total = 0; total < robots.Length / 2; ++step)
+    for (step = 0, total = 0; total < RUN; ++step)
     {
-        for (i = 0; i < robots.Length; i++)
+        for (i = 0; i < robots.Length; ++i)
         {
             (x, y, z, w) = qq[i];
             --counts[x, y];
@@ -60,9 +60,10 @@ int Part2()
             ++counts[x, y];
         }
 
-        for (total = 0, i = 0; i < qq.Length; i++)
-            if (counts[qq[i].x, qq[i].y + 1] > 0)
-                ++total;
+        for ((total, run) = (0, 1), i = 0; i < qq.Length; ++i)
+            (total, run) = (counts[qq[i].x, qq[i].y + 1] > 0)
+                ? (total, ++run)
+                : (total > run ? total : run, 1);
     }
 
     return step;
