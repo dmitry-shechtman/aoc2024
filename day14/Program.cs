@@ -16,19 +16,19 @@ Console.WriteLine(Part1());
 Console.WriteLine(await Part2Async());
 
 int Part1() => robots
-    .Select(Step100)
+    .Select(m => Step(m, 100))
     .Select(GetQuadrant)
     .Sum()
     .Product();
 
-Vector Step100(Matrix m)
+Vector4D Step(Matrix m, int i, int n = 1)
 {
     var (p, v) = m;
-    var (x, y) = (p + v * 100) % size;
-    return new(x < 0 ? x + W : x, y < 0 ? y + H : y);
+    var (x, y) = (p + v * i) % size;
+    return new(x < 0 ? x + W : x, y < 0 ? y + H : y, v.x * n, v.y * n);
 }
 
-Vector4D GetQuadrant(Vector p) => p switch
+Vector4D GetQuadrant(Vector4D p) => p switch
 {
     _ when p.x < half.x && p.y < half.y => (1, 0, 0, 0),
     _ when p.x > half.x && p.y < half.y => (0, 1, 0, 0),
@@ -49,12 +49,9 @@ int Part2(int step, int n)
     Span<Vector4D> qq = stackalloc Vector4D[robots.Length];
     int[,] counts = new int[W, H + 1];
     int total, x, y, i;
-    Vector p, v;
     for (i = 0; i < robots.Length; i++)
     {
-        (p, v) = robots[i];
-        (x, y) = (p + v * step) % size;
-        qq[i] = (x < 0 ? x + W : x, y < 0 ? y + H : y, robots[i].m21 * n, robots[i].m22 * n);
+        qq[i] = Step(robots[i], step, n);
         ++counts[qq[i].x, qq[i].y];
     }
 
