@@ -1,5 +1,4 @@
 ﻿using aoc;
-using System.Diagnostics;
 using System.Text.RegularExpressions;
 
 Regex regex = new(@"^p=(\d+),(\d+) v=(-?\d+),(-?\d+)$");
@@ -14,10 +13,7 @@ var robots = File.ReadAllLines("input.txt")
     .ToArray();
 
 Console.WriteLine(Part1());
-var w = Stopwatch.StartNew();
 Console.WriteLine(Part2());
-w.Stop();
-Console.WriteLine(w.Elapsed);
 
 int Part1() => robots
     .Select(Step100)
