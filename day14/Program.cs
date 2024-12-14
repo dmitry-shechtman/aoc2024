@@ -1,15 +1,14 @@
 ﻿using aoc;
 using System.Text.RegularExpressions;
 
-Regex regex = new(@"^p=(\d+),(\d+) v=(-?\d+),(-?\d+)$");
+Regex regex = new(@"^p=(?<m11>\d+),(?<m12>\d+) v=(?<m21>-?\d+),(?<m22>-?\d+)$");
 
 const int W = 101, H = 103, RUN = 10;
 Vector size = new(W, H);
 Vector half = size / 2;
 
 var robots = File.ReadAllLines("input.txt")
-    .Select(regex.GetInts)
-    .Select(v => new Matrix(v[0], v[1], v[2], v[3]))
+    .Select(s => Matrix.Parse(regex, s))
     .ToArray();
 
 Console.WriteLine(Part1());
