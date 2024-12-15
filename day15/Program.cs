@@ -14,11 +14,13 @@ Matrix Even  = (2, 0, 0, 1, 0, 0);
 Matrix Odd   = (2, 0, 0, 1, 1, 0);
 Vector Score = (1, 100);
 
-var tt = File.ReadAllText("input.txt")
-    .Trim().Split("\n\n");
+var s = File.ReadAllText("input.txt")
+    .AsSpan()
+    .Trim();
 
-var multi = MultiGrid.Parse(tt[0], cc, out var size);
-var path = Grid.ParseVectors(tt[1].Replace("\n", ""));
+var index = s.IndexOf("\n\n");
+var multi = MultiGrid.Parse(s[..index], cc, out var size);
+var path = Grid.ParseVectors(s[index..], '\n');
 
 int[] grid = Array.Empty<int>();
 Stack<(Vector, int)> stack = new();
