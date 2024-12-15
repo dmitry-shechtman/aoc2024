@@ -36,7 +36,8 @@ int Solve(Func<Vector> init)
     SetValue(pos, ROBOT);
     foreach (var vec in path)
     {
-        if (!CanPush(pos, vec))
+        stack.Clear();
+        if (!TryAdd(pos, vec))
             continue;
         foreach (var (box, _) in stack)
             SetValue(box, NONE);
@@ -72,33 +73,26 @@ Vector Init2()
     return multi[ROBOT].Single() * Even;
 }
 
-bool CanPush(Vector pos, Vector vec)
+bool TryAdd(Vector pos, Vector vec)
 {
-    stack.Clear();
-    queue.Clear();
-    queue.Enqueue(pos);
-    while (queue.TryDequeue(out pos))
-    {
-        var value = GetValue(pos);
-        if (value == NONE)
-            continue;
-        if (value == WALL)
-            return false;
-        AddBox(pos, vec, value);
-    }
-    return true;
+    var value = GetValue(pos);
+    return value == NONE
+        || (value != WALL
+        && TryAdd(pos + vec, vec)
+        && TryAddBox(pos, vec, value));
 }
 
-void AddBox(Vector pos, Vector vec, int value)
+bool TryAddBox(Vector pos, Vector vec, int value)
 {
     stack.Push((pos, value));
-    queue.Enqueue(pos + vec);
     if (vec.x == 0 && value < BOX)
     {
         pos += (value == LEFT) ? (1, 0) : (-1, 0);
+        if (!TryAdd(pos + vec, vec))
+            return false;
         stack.Push((pos, value ^ BOX));
-        queue.Enqueue(pos + vec);
     }
+    return true;
 }
 
 int GetScore()
