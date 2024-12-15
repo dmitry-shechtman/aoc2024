@@ -6,6 +6,9 @@ const int LEFT  = 1;
 const int RIGHT = 2;
 const int BOX   = 3;
 const int WALL  = 4;
+const int ROBOT = 5;
+
+var cc = ".[]O#@";
 
 Matrix Even  = (2, 0, 0, 1, 0, 0);
 Matrix Odd   = (2, 0, 0, 1, 1, 0);
@@ -14,22 +17,21 @@ Vector Score = (1, 100);
 var tt = File.ReadAllText("input.txt")
     .Trim().Split("\n\n");
 
-var multi = MultiGrid.Parse(tt[0], "#O", out var size);
-var start = Vector.FindChar(tt[0], '@');
+var multi = MultiGrid.Parse(tt[0], cc, out var size);
 var path = Grid.ParseVectors(tt[1].Replace("\n", ""));
 
 int[] grid = Array.Empty<int>();
 Stack<(Vector, int)> stack = new();
 Queue<Vector> queue = new();
-Vector pos = default;
 
 Console.WriteLine(Solve(Init1));
 Console.WriteLine(Solve(Init2));
-Console.WriteLine(GetString(pos));
+Console.WriteLine(GetString());
 
-int Solve(Action init)
+int Solve(Func<Vector> init)
 {
-    init();
+    var pos = init();
+    SetValue(pos, ROBOT);
     foreach (var vec in path)
     {
         if (!CanPush(pos, vec))
@@ -43,36 +45,36 @@ int Solve(Action init)
     return GetScore();
 }
 
-void Init1()
+Vector Init1()
 {
-    pos = start;
     grid = new int[size.Length];
-    foreach (var box in multi[0])
+    foreach (var box in multi[WALL])
         SetValue(box, WALL);
-    foreach (var box in multi[1])
+    foreach (var box in multi[BOX])
         SetValue(box, BOX);
+    return multi[ROBOT].Single();
 }
 
-void Init2()
+Vector Init2()
 {
-    pos = start * Even;
     size = new((Vector)size * Even);
     grid = new int[size.Length];
-    foreach (var box in multi[0])
+    foreach (var box in multi[WALL])
         SetValue(box * Even, WALL);
-    foreach (var box in multi[0])
+    foreach (var box in multi[WALL])
         SetValue(box * Odd, WALL);
-    foreach (var box in multi[1])
+    foreach (var box in multi[BOX])
         SetValue(box * Even, LEFT);
-    foreach (var box in multi[1])
+    foreach (var box in multi[BOX])
         SetValue(box * Odd, RIGHT);
+    return multi[ROBOT].Single() * Even;
 }
 
 bool CanPush(Vector pos, Vector vec)
 {
     stack.Clear();
     queue.Clear();
-    queue.Enqueue(pos + vec);
+    queue.Enqueue(pos);
     while (queue.TryDequeue(out pos))
     {
         var value = GetValue(pos);
@@ -113,11 +115,11 @@ int GetValue(Vector pos) =>
 void SetValue(Vector pos, int value) =>
     grid[pos.y * size.Width + pos.x] = value;
 
-string GetString(Vector pos)
+string GetString()
 {
     char[] chars = new char[(size.Width + 1) * size.Height];
     for (int y = 0, i = 0, j = 0; y < size.Height; y++, chars[j++] = '\n')
         for (int x = 0; x < size.Width; x++, i++)
-            chars[j++] = pos == (x, y) ? '@' : ".[]O#"[grid[i]];
+            chars[j++] = cc[grid[i]];
     return new string(chars);
 }
