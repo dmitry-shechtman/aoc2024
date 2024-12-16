@@ -2,16 +2,14 @@
 using aoc.Grids;
 
 const int NONE  = 0;
+const int ROBOT = 0;
 const int LEFT  = 1;
 const int RIGHT = 2;
 const int BOX   = 3;
 const int WALL  = 4;
-const int ROBOT = 5;
 
-var cc = ".[]O#@";
+var cc = "@[]O#";
 
-Matrix Even  = (2, 0, 0, 1, 0, 0);
-Matrix Odd   = (2, 0, 0, 1, 1, 0);
 Vector Score = (1, 100);
 
 var s = File.ReadAllText("input.txt")
@@ -22,22 +20,31 @@ var index = s.IndexOf("\n\n");
 var multi = MultiGrid.Parse(s[..index], cc, out var size);
 var path = Grid.ParseVectors(s[index..], '\n');
 
-int[] grid = Array.Empty<int>();
+int[] grid;
 Stack<(Vector, int)> stack = new();
-Queue<Vector> queue = new();
+Vector pos;
 
-Console.WriteLine(Solve(Init1));
-Console.WriteLine(Solve(Init2));
-Console.WriteLine(GetString());
+Console.WriteLine(Part1());
+Console.WriteLine(Part2());
+Console.WriteLine(GetString(pos));
 
-int Solve(Func<Vector> init)
+int Part1() => Solve(
+    Matrix.Identity,
+    Matrix.Identity,
+    BOX, BOX);
+
+int Part2() => Solve(
+    (2, 0, 0, 1, 0, 0),
+    (2, 0, 0, 1, 1, 0),
+    LEFT, RIGHT);
+
+int Solve(Matrix even, Matrix odd, int left, int right)
 {
-    var pos = init();
-    SetValue(pos, ROBOT);
+    Init(even, odd, left, right);
     foreach (var vec in path)
     {
         stack.Clear();
-        if (!TryAdd(pos, vec))
+        if (!TryAdd(pos + vec, vec))
             continue;
         foreach (var (box, _) in stack)
             SetValue(box, NONE);
@@ -48,29 +55,19 @@ int Solve(Func<Vector> init)
     return GetScore();
 }
 
-Vector Init1()
+void Init(Matrix even, Matrix odd, int left, int right)
 {
+    pos = multi[ROBOT].Single() * even;
+    size = new((Vector)size * even);
     grid = new int[size.Length];
     foreach (var box in multi[WALL])
-        SetValue(box, WALL);
-    foreach (var box in multi[BOX])
-        SetValue(box, BOX);
-    return multi[ROBOT].Single();
-}
-
-Vector Init2()
-{
-    size = new((Vector)size * Even);
-    grid = new int[size.Length];
+        SetValue(box * even, WALL);
     foreach (var box in multi[WALL])
-        SetValue(box * Even, WALL);
-    foreach (var box in multi[WALL])
-        SetValue(box * Odd, WALL);
+        SetValue(box * odd, WALL);
     foreach (var box in multi[BOX])
-        SetValue(box * Even, LEFT);
+        SetValue(box * even, left);
     foreach (var box in multi[BOX])
-        SetValue(box * Odd, RIGHT);
-    return multi[ROBOT].Single() * Even;
+        SetValue(box * odd, right);
 }
 
 bool TryAdd(Vector pos, Vector vec)
@@ -111,11 +108,11 @@ int GetValue(Vector pos) =>
 void SetValue(Vector pos, int value) =>
     grid[pos.y * size.Width + pos.x] = value;
 
-string GetString()
+string GetString(Vector pos)
 {
     char[] chars = new char[(size.Width + 1) * size.Height];
     for (int y = 0, i = 0, j = 0; y < size.Height; y++, chars[j++] = '\n')
         for (int x = 0; x < size.Width; x++, i++)
-            chars[j++] = cc[grid[i]];
+            chars[j++] = pos == (x, y) ? '@' : ".[]O#"[grid[i]];
     return new string(chars);
 }
