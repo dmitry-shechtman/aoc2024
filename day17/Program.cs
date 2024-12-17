@@ -6,7 +6,6 @@ var input = File.ReadAllText("input.txt").Trim();
 var match = regex.Match(input);
 var reg = GetInts("reg");
 var prg = GetInts("prg");
-var output = new int[prg.Length];
 
 Console.WriteLine(Part1());
 Console.WriteLine(Part2());
@@ -31,25 +30,26 @@ long Part2()
 
 ReadOnlySpan<int> Run(long a, long b, long c)
 {
+    const int A = 4, B = 5, C = 6;
+    var output = new int[prg.Length];
     int ip = 0, length = 0, op, x, y;
-    var val = new[] { 0, 1, 2, 3, a, b, c, 0 };
+    var val = new[] { 0, 1, 2, 3, a, b, c };
     while (ip < prg.Length)
     {
-        (a, b, c) = (val[4], val[5], val[6]);
-        (op, x)   = (prg[ip], prg[ip + 1]);
-        (ip, y)   = (op != 3 || a == 0 ? ip + 2 : x, (int)val[x]);
-        (val[4], val[5], val[6]) = op switch
+        (op, x) = (prg[ip++], prg[ip++]);
+        y = (int)val[x];
+        _ = op switch
         {
-            0 => (a >> y, b,          c),
-            1 => (a,      b ^ x,      c),
-            2 => (a,      val[x] & 7, c),
-            4 => (a,      b ^ c,      c),
-            6 => (a,      a >> y,     c),
-            7 => (a,      b,          a >> y),
-            _ => (a,      b,          c)
+            0 => val[A] >>= y,
+            1 => val[B]  ^= x,
+            2 => val[B]   = y & 7,
+            4 => val[B]  ^= val[C],
+            6 => val[B]   = val[A] >> y,
+            7 => val[C]   = val[A] >> y,
+            3 => ip = val[A] != 0 ? x : ip,
+            5 => output[length++] = y & 7,
+            _ => throw new()
         };
-        if (op == 5)
-            output[length++] = y & 7;
     }
     return output[..length];
 }
