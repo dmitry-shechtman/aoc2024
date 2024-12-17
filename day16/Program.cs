@@ -11,6 +11,7 @@ var end   = size.GetIndex(multi[2].Single());
 var walls = new bool[size.Length];
 foreach (var pos in multi[0])
     size.SetValue(walls, pos, true);
+var width1 = size.width + 1;
 
 var costs = new int[size.Length];
 costs.Fill(int.MaxValue);
@@ -23,28 +24,25 @@ Console.WriteLine(Part2());
 
 int Part1()
 {
-    Vector vec, vecA, vecB;
-    int pos, offset, offsetA, offsetB, cost, cost1;
-    queue.Enqueue(new(start, Vector.East, 0));
+    int vec, vecA, vecB;
+    int pos, cost, cost1;
+    queue.Enqueue(new(start, 1, 0));
 
 
     while (queue.TryDequeue(out var item))
     {
         (pos, vec, cost) = item;
-        vecA = (vec.y, vec.x);
+        vecA = vec < 0 ? width1 + vec : width1 - vec;
         vecB = -vecA;
-        offset = size.GetIndex(vec);
-        offsetA = size.GetIndex(vecA);
-        offsetB = size.GetIndex(vecB);
 
         for (cost1 = cost + Penalty + 1;
             !walls[pos] && pos != end;
-            pos += offset, ++cost, ++cost1)
+            pos += vec, ++cost, ++cost1)
         {
-            if (TryAdd(pos + offsetA, cost1))
-                queue.Enqueue(new(pos + offsetA, vecA, cost1));
-            if (TryAdd(pos + offsetB, cost1))
-                queue.Enqueue(new(pos + offsetB, vecB, cost1));
+            if (TryAdd(pos + vecA, cost1))
+                queue.Enqueue(new(pos + vecA, vecA, cost1));
+            if (TryAdd(pos + vecB, cost1))
+                queue.Enqueue(new(pos + vecB, vecB, cost1));
 
         }
 
@@ -64,23 +62,20 @@ bool TryAdd(int pos, int cost)
 
 int Part2()
 {
-    Vector vec, vecA, vecB;
-    int pos, offset, cost, cost2;
-    queue.Enqueue(new(start, Vector.East, 0));
+    int vec, vecA, vecB;
+    int pos, cost, cost2;
+    queue.Enqueue(new(start, 1, 0));
     List<int> path = new();
 
     while (queue.TryDequeue(out var item))
     {
         (pos, vec, cost) = item;
-        vecA = (vec.y, vec.x);
+        vecA = vec < 0 ? width1 + vec : width1 - vec;
         vecB = -vecA;
-        offset = size.GetIndex(vec);
-
         path.Clear();
-
         for (cost2 = cost + Penalty;
             !walls[pos] && pos != end;
-            pos += offset, ++cost, ++cost2)
+            pos += vec, ++cost, ++cost2)
         {
             if (TryAdd2(pos, cost2, path))
                 queue.Enqueue(new(pos, vecA, cost2));
@@ -121,5 +116,5 @@ int CountPathItems()
     return set.Count;
 }
 
-record struct QueueItem(int Pos, Vector Vec, int Cost);
+record struct QueueItem(int Pos, int Vec, int Cost);
 record struct PathValue(int Cost, HashSet<int> Path);
