@@ -10,7 +10,7 @@ int Part2() =>
 
 int Solve(string p) =>
     new Regex(p)
-        .SelectStringsMany(input)
+        .SelectValuesMany<string>(input, 0)
         .Aggregate((true, v: 0), Parse2).v;
 
 int Parse(string[] ss) =>

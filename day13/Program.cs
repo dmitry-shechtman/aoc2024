@@ -8,7 +8,7 @@ Matrix Shift = Matrix.FromColumns(default, default, (10000000000000, 10000000000
 var input = File.ReadAllText("input.txt").Trim();
 
 var machines = input.Split("\n\n")
-    .Select(Regex.GetLongs)
+    .Select(Regex.GetValues<long>)
     .Select(FromLongs)
     .ToArray();
 

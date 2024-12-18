@@ -8,7 +8,7 @@ Vector size = new(W, H);
 Vector half = size / 2;
 
 var robots = File.ReadAllLines("input.txt")
-    .Select(regex.GetInts)
+    .Select(regex.GetValues<int>)
     .Select(v => new Matrix(v[0], v[1], v[2], v[3]))
     .ToArray();
 

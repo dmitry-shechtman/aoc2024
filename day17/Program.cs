@@ -3,17 +3,12 @@
 Regex regex = new(@"^(Register \w: (?<reg>\d+)\n)+\nProgram: ((?<prg>[0-7]),)+(?<prg>[0-7])$");
 
 var input = File.ReadAllText("input.txt").Trim();
-var match = regex.Match(input);
-var reg = GetInts("reg");
-var prg = GetInts("prg");
+var values = regex.SelectAllValues<int>(input);
+var reg = values["reg"].ToArray();
+var prg = values["prg"].ToArray();
 
 Console.WriteLine(Part1());
 Console.WriteLine(Part2());
-
-int[] GetInts(string name) =>
-    match.Groups[name].Captures
-        .Select(c => int.Parse(c.Value))
-        .ToArray();
 
 string Part1() =>
     string.Join(',', Run(reg[0], reg[1], reg[2]).ToArray());
