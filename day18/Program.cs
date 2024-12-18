@@ -1,7 +1,14 @@
 ﻿using aoc;
 using aoc.Grids;
 
-var input = File.ReadAllText("input.txt").Trim();
+var (filename, index) = args.Length switch
+{
+    0 => ("input.txt", 1024),
+    1 => (args[0], 1024),
+    _ => (args[0], int.Parse(args[1]))
+};
+
+var input = File.ReadAllText(filename).Trim();
 var points = input.Split('\n')
     .Select(Vector.Parse)
     .ToArray();
@@ -17,10 +24,10 @@ Console.WriteLine(Part1());
 Console.WriteLine(Part2());
 
 int Part1() =>
-    TryFindShortestPath(1024, out var value) ? value : 0;
+    TryFindShortestPath(index, out var value) ? value : 0;
 
 Vector Part2() =>
-    FindBlock(1024, points.Length);
+    FindBlock(index, points.Length);
 
 Vector FindBlock(int start, int end)
 {
