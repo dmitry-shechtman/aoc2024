@@ -1,6 +1,5 @@
 ﻿using aoc;
 using aoc.Grids;
-using System.Diagnostics;
 
 var input = File.ReadAllText("input.txt").Trim();
 var points = input.Split('\n')
@@ -16,10 +15,7 @@ Queue<QueueItem> queue = new();
 Vector[] headings = Grid.Headings;
 
 Console.WriteLine(Part1());
-var w = Stopwatch.StartNew();
 Console.WriteLine(Part2());
-w.Stop();
-Console.WriteLine(w.Elapsed);
 
 int Part1() =>
     TryFindShortestPath(out var value) ? value : 0;
