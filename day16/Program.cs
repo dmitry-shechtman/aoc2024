@@ -13,8 +13,6 @@ Dictionary<Vector, int> dists =
 Dictionary<Vector, PathValue> paths =
     walls.ToDictionary(p => p, _ => new PathValue());
 
-Queue<QueueItem> queue = new();
-
 Console.WriteLine(Part1());
 Console.WriteLine(Part2());
 
@@ -22,24 +20,26 @@ int Part1()
 {
     Vector pos, vec, vecA, vecB;
     int dist, dist1, dist2;
-    queue.Enqueue(new(start, Vector.East, 0));
 
+    PriorityQueue<Matrix, int> queue = new();
+    queue.Enqueue(new(start, Vector.East), 0);
 
-    while (queue.TryDequeue(out var item))
+    while (queue.TryDequeue(out var item, out dist))
     {
-        vec = item.Vec;
+        (pos, vec) = item;
         vecA = (vec.y, vec.x);
         vecB = -vecA;
 
 
-        for (pos = item.Pos, dist = item.Dist, dist1 = dist + Penalty + 1;
+        for (dist1 = dist + Penalty + 1;
             pos != end && (!dists.TryGetValue(pos, out dist2) || dist2 > 0);
             pos += vec, ++dist, ++dist1)
         {
             if (TryAdd(pos + vecA, dist1))
-                queue.Enqueue(new(pos + vecA, vecA, dist1));
+                queue.Enqueue(new(pos + vecA, vecA), dist1);
+
             if (TryAdd(pos + vecB, dist1))
-                queue.Enqueue(new(pos + vecB, vecB, dist1));
+                queue.Enqueue(new(pos + vecB, vecB), dist1);
 
         }
 
@@ -59,19 +59,20 @@ bool TryAdd(Vector pos, int dist)
 
 int Part2()
 {
-    queue.Enqueue(new(start, Vector.East, 0));
     Vector pos, vec, vecA, vecB;
     int dist, dist2;
     List<Vector> path = new();
+    Queue<QueueItem> queue = new();
+    queue.Enqueue(new(start, Vector.East, 0));
 
     while (queue.TryDequeue(out var item))
     {
-        vec = item.Vec;
+        (pos, vec, dist) = item;
         vecA = (vec.y, vec.x);
         vecB = -vecA;
         path.Clear();
 
-        for (pos = item.Pos, dist = item.Dist, dist2 = dist + Penalty;
+        for (dist2 = dist + Penalty;
             pos != end && (!dists.TryGetValue(pos, out var dist1) || dist1 > 0);
             pos += vec, ++dist, ++dist2)
         {
@@ -106,14 +107,14 @@ bool TryAdd2(Vector pos, int dist, List<Vector> path)
 int CountPathItems()
 {
     HashSet<Vector> set = new() { end };
-    Queue<Vector> queue2 = new(set);
-    while (queue2.TryDequeue(out var item))
+    Queue<Vector> queue = new(set);
+    while (queue.TryDequeue(out var item))
         if (paths.TryGetValue(item, out var path2))
             foreach (var pos2 in path2.Path)
                 if (set.Add(pos2))
-                    queue2.Enqueue(pos2);
+                    queue.Enqueue(pos2);
     return set.Count;
 }
 
-record struct QueueItem(Vector Pos, Vector Vec = default, int Dist = 0);
+record struct QueueItem(Vector Pos, Vector Vec, int Dist);
 record struct PathValue(int Dist, HashSet<Vector> Path);
