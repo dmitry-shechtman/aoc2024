@@ -7,7 +7,7 @@ var input = File.ReadAllText("input.txt").Trim();
 var multi = MultiGrid.Parse(input, "#SE");
 var (walls, start, end) = (multi[0], multi[1].Single(), multi[2].Single());
 
-Dictionary<Vector, int> costs = new();
+Dictionary<Vector, int> dists = new();
 Dictionary<Vector, PathValue> paths = new();
 Queue<QueueItem> queue = new();
 
@@ -17,7 +17,7 @@ Console.WriteLine(Part2());
 int Part1()
 {
     Vector pos, vec, vecA, vecB;
-    int cost, cost1;
+    int dist, dist1;
     queue.Enqueue(new(start, Vector.East, 0));
 
 
@@ -28,28 +28,28 @@ int Part1()
         vecB = -vecA;
 
 
-        for (pos = item.Pos, cost = item.Cost, cost1 = cost + Penalty + 1;
+        for (pos = item.Pos, dist = item.Dist, dist1 = dist + Penalty + 1;
             !walls.Contains(pos) && pos != end;
-            pos += vec, ++cost, ++cost1)
+            pos += vec, ++dist, ++dist1)
         {
-            if (TryAdd(pos + vecA, cost1))
-                queue.Enqueue(new(pos + vecA, vecA, cost1));
-            if (TryAdd(pos + vecB, cost1))
-                queue.Enqueue(new(pos + vecB, vecB, cost1));
+            if (TryAdd(pos + vecA, dist1))
+                queue.Enqueue(new(pos + vecA, vecA, dist1));
+            if (TryAdd(pos + vecB, dist1))
+                queue.Enqueue(new(pos + vecB, vecB, dist1));
 
         }
 
-        TryAdd(pos, cost);
+        TryAdd(pos, dist);
     }
 
-    return costs[end];
+    return dists[end];
 }
 
-bool TryAdd(Vector pos, int cost)
+bool TryAdd(Vector pos, int dist)
 {
-    if (costs.TryGetValue(pos, out var cost2) && cost2 <= cost)
+    if (dists.TryGetValue(pos, out var dist2) && dist2 <= dist)
         return false;
-    costs[pos] = cost;
+    dists[pos] = dist;
     return true;
 }
 
@@ -57,7 +57,7 @@ int Part2()
 {
     queue.Enqueue(new(start, Vector.East, 0));
     Vector pos, vec, vecA, vecB;
-    int cost, cost2;
+    int dist, dist2;
     List<Vector> path = new();
 
     while (queue.TryDequeue(out var item))
@@ -67,35 +67,35 @@ int Part2()
         vecB = -vecA;
         path.Clear();
 
-        for (pos = item.Pos, cost = item.Cost, cost2 = cost + Penalty;
+        for (pos = item.Pos, dist = item.Dist, dist2 = dist + Penalty;
             !walls.Contains(pos) && pos != end;
-            pos += vec, ++cost, ++cost2)
+            pos += vec, ++dist, ++dist2)
         {
-            if (TryAdd2(pos, cost2, path))
+            if (TryAdd2(pos, dist2, path))
             {
-                queue.Enqueue(new(pos, vecA, cost2));
-                queue.Enqueue(new(pos, vecB, cost2));
+                queue.Enqueue(new(pos, vecA, dist2));
+                queue.Enqueue(new(pos, vecB, dist2));
             }
             path.Add(pos);
         }
 
-        TryAdd2(pos, cost, path);
+        TryAdd2(pos, dist, path);
     }
 
     return CountPathItems();
 }
 
-bool TryAdd2(Vector pos, int cost, List<Vector> path)
+bool TryAdd2(Vector pos, int dist, List<Vector> path)
 {
-    if (paths.TryGetValue(pos, out var value) && value.Cost <= cost)
+    if (paths.TryGetValue(pos, out var value) && value.Dist <= dist)
     {
-        if (value.Cost < cost)
+        if (value.Dist < dist)
             return false;
         for (int i = 1; i < path.Count; i++)
             value.Path.Add(path[i]);
         return true;
     }
-    paths[pos] = new(cost, new(path));
+    paths[pos] = new(dist, new(path));
     return true;
 }
 
@@ -111,5 +111,5 @@ int CountPathItems()
     return set.Count;
 }
 
-record struct QueueItem(Vector Pos, Vector Vec = default, int Cost = 0);
-record struct PathValue(int Cost, HashSet<Vector> Path);
+record struct QueueItem(Vector Pos, Vector Vec = default, int Dist = 0);
+record struct PathValue(int Dist, HashSet<Vector> Path);
