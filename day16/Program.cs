@@ -7,8 +7,12 @@ var input = File.ReadAllText("input.txt").Trim();
 var multi = MultiGrid.Parse(input, "#SE");
 var (walls, start, end) = (multi[0], multi[1].Single(), multi[2].Single());
 
-Dictionary<Vector, int> dists = new();
-Dictionary<Vector, PathValue> paths = new();
+Dictionary<Vector, int> dists =
+    walls.ToDictionary(p => p, _ => 0);
+
+Dictionary<Vector, PathValue> paths =
+    walls.ToDictionary(p => p, _ => new PathValue());
+
 Queue<QueueItem> queue = new();
 
 Console.WriteLine(Part1());
@@ -17,7 +21,7 @@ Console.WriteLine(Part2());
 int Part1()
 {
     Vector pos, vec, vecA, vecB;
-    int dist, dist1;
+    int dist, dist1, dist2;
     queue.Enqueue(new(start, Vector.East, 0));
 
 
@@ -29,7 +33,7 @@ int Part1()
 
 
         for (pos = item.Pos, dist = item.Dist, dist1 = dist + Penalty + 1;
-            !walls.Contains(pos) && pos != end;
+            pos != end && (!dists.TryGetValue(pos, out dist2) || dist2 > 0);
             pos += vec, ++dist, ++dist1)
         {
             if (TryAdd(pos + vecA, dist1))
@@ -68,7 +72,7 @@ int Part2()
         path.Clear();
 
         for (pos = item.Pos, dist = item.Dist, dist2 = dist + Penalty;
-            !walls.Contains(pos) && pos != end;
+            pos != end && (!dists.TryGetValue(pos, out var dist1) || dist1 > 0);
             pos += vec, ++dist, ++dist2)
         {
             if (TryAdd2(pos, dist2, path))
