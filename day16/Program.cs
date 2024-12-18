@@ -21,6 +21,7 @@ int Part1()
     Vector pos, vec, vecA, vecB;
     int dist, dist1, dist2;
 
+
     PriorityQueue<Matrix, int> queue = new();
     queue.Enqueue(new(start, Vector.East), 0);
 
@@ -43,6 +44,7 @@ int Part1()
 
         }
 
+
         TryAdd(pos, dist);
     }
 
@@ -61,6 +63,7 @@ int Part2()
 {
     Vector pos, vec, vecA, vecB;
     int dist, dist2;
+    PathValue value;
     List<Vector> path = new();
     Queue<QueueItem> queue = new();
     queue.Enqueue(new(start, Vector.East, 0));
@@ -73,10 +76,10 @@ int Part2()
         path.Clear();
 
         for (dist2 = dist + Penalty;
-            pos != end && (!dists.TryGetValue(pos, out var dist1) || dist1 > 0);
+            pos != end && (!paths.TryGetValue(pos, out value) || value.Dist > 0);
             pos += vec, ++dist, ++dist2)
         {
-            if (TryAdd2(pos, dist2, path))
+            if (TryAdd2(pos, dist2, path, value))
             {
                 queue.Enqueue(new(pos, vecA, dist2));
                 queue.Enqueue(new(pos, vecB, dist2));
@@ -84,15 +87,16 @@ int Part2()
             path.Add(pos);
         }
 
-        TryAdd2(pos, dist, path);
+        if (!paths.TryGetValue(pos, out value))
+            paths[pos] = new(dist, new(path));
     }
 
     return CountPathItems();
 }
 
-bool TryAdd2(Vector pos, int dist, List<Vector> path)
+bool TryAdd2(Vector pos, int dist, List<Vector> path, PathValue value)
 {
-    if (paths.TryGetValue(pos, out var value) && value.Dist <= dist)
+    if (value.Dist > 0 && value.Dist <= dist)
     {
         if (value.Dist < dist)
             return false;
