@@ -41,6 +41,7 @@ int Part1()
         {
             if (TryAdd(pos + vecA, cost1))
                 queue.Enqueue(new(pos + vecA, vecA, cost1));
+
             if (TryAdd(pos + vecB, cost1))
                 queue.Enqueue(new(pos + vecB, vecB, cost1));
 
@@ -78,9 +79,10 @@ int Part2()
             pos += vec, ++cost, ++cost2)
         {
             if (TryAdd2(pos, cost2, path))
+            {
                 queue.Enqueue(new(pos, vecA, cost2));
-            if (TryAdd2(pos, cost2, path))
                 queue.Enqueue(new(pos, vecB, cost2));
+            }
             path.Add(pos);
         }
 
