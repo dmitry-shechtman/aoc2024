@@ -10,7 +10,7 @@ VectorRange range = points.Range();
 Size size = new(range);
 
 HashSet<Vector> balls = new();
-Queue<QueueItem> queue = new();
+PriorityQueue<Vector, int> queue = new();
 Vector[] headings = Grid.Headings;
 
 Console.WriteLine(Part1());
@@ -37,17 +37,14 @@ bool TryFindShortestPath(int index, out int dist)
     balls.Clear();
     points[..index].All(balls.Add);
     queue.Clear();
-    queue.Enqueue(default);
-    while (queue.TryDequeue(out var item) && (dist = ++item.Dist) > 0)
+    queue.Enqueue(default, 1);
+    while (queue.TryDequeue(out var pos0, out dist))
         foreach (var vec in headings)
-            if (vec != item.Vec && size.Contains(pos = item.Pos + vec))
-                if (balls.Add(pos))
-                    if (pos == range.Max)
-                        return true;
-                    else
-                        queue.Enqueue(new(pos, -vec, dist));
+            if (size.Contains(pos = pos0 + vec) && balls.Add(pos))
+                if (pos == range.Max)
+                    return true;
+                else
+                    queue.Enqueue(pos, dist + 1);
     dist = 0;
     return false;
 }
-
-record struct QueueItem(Vector Pos, Vector Vec, int Dist);
