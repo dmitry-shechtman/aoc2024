@@ -21,8 +21,6 @@ foreach (var pos in multi[0])
     size.SetValue(paths, pos, default);
 }
 
-Queue<QueueItem> queue = new();
-
 Console.WriteLine(Part1());
 Console.WriteLine(Part2());
 
@@ -30,12 +28,13 @@ int Part1()
 {
     int vec, vecA, vecB;
     int pos, dist, dist1;
-    queue.Enqueue(new(start, 1, 0));
+    PriorityQueue<Vector, int> queue = new();
+    queue.Enqueue(new(start, 1), 0);
 
 
-    while (queue.TryDequeue(out var item))
+    while (queue.TryDequeue(out var item, out dist))
     {
-        (pos, vec, dist) = item;
+        (pos, vec) = item;
         vecA = vec < 0 ? width1 + vec : width1 - vec;
         vecB = -vecA;
 
@@ -44,10 +43,10 @@ int Part1()
             pos += vec, ++dist, ++dist1)
         {
             if (TryAdd(pos + vecA, dist1))
-                queue.Enqueue(new(pos + vecA, vecA, dist1));
+                queue.Enqueue(new(pos + vecA, vecA), dist1);
 
             if (TryAdd(pos + vecB, dist1))
-                queue.Enqueue(new(pos + vecB, vecB, dist1));
+                queue.Enqueue(new(pos + vecB, vecB), dist1);
 
         }
 
@@ -69,6 +68,7 @@ int Part2()
 {
     int vec, vecA, vecB;
     int pos, dist, dist2;
+    Queue<Vector3D> queue = new();
     queue.Enqueue(new(start, 1, 0));
     List<int> path = new();
 
@@ -114,13 +114,12 @@ bool TryAdd2(int pos, int dist, List<int> path)
 int CountPathItems()
 {
     HashSet<int> set = new() { end };
-    Queue<int> queue2 = new(set);
-    while (queue2.TryDequeue(out var item))
+    Queue<int> queue = new(set);
+    while (queue.TryDequeue(out var item))
         foreach (var pos2 in paths[item].Path)
             if (set.Add(pos2))
-                queue2.Enqueue(pos2);
+                queue.Enqueue(pos2);
     return set.Count;
 }
 
-record struct QueueItem(int Pos, int Vec, int Dist);
 record struct PathValue(int Dist, HashSet<int> Path);
