@@ -21,8 +21,18 @@ int Part1() =>
     TryFindShortestPath(out var value) ? value : 0;
 
 Vector Part2() =>
-    points[walls.Count..].First(p =>
-        walls.Add(p) && !TryFindShortestPath(out _));
+    FindBlock(walls.Count, points.Length);
+
+Vector FindBlock(int start, int end)
+{
+    var pivot = (start + end) / 2;
+    walls.Clear();
+    points[..pivot].All(walls.Add);
+    var found = TryFindShortestPath(out _);
+    return end - start == 1
+        ? points[found ? pivot : pivot - 1]
+        : FindBlock(found ? pivot : start, found ? end : pivot);
+}
 
 bool TryFindShortestPath(out int cost)
 {
