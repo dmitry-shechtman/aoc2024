@@ -8,15 +8,19 @@ var multi = MultiGrid.Parse(input, "#SE", out var size);
 
 var start = size.GetIndex(multi[1].Single());
 var end   = size.GetIndex(multi[2].Single());
-var walls = new bool[size.Length];
-foreach (var pos in multi[0])
-    size.SetValue(walls, pos, true);
 var width1 = size.width + 1;
 
 var dists = new int[size.Length];
 dists.Fill(int.MaxValue);
 var paths = new PathValue[size.Length];
 paths.Fill(new(int.MaxValue, new()));
+
+foreach (var pos in multi[0])
+{
+    size.SetValue(dists, pos, 0);
+    size.SetValue(paths, pos, default);
+}
+
 Queue<QueueItem> queue = new();
 
 Console.WriteLine(Part1());
@@ -36,7 +40,7 @@ int Part1()
         vecB = -vecA;
 
         for (dist1 = dist + Penalty + 1;
-            !walls[pos] && pos != end;
+            dists[pos] > 0 && pos != end;
             pos += vec, ++dist, ++dist1)
         {
             if (TryAdd(pos + vecA, dist1))
@@ -75,7 +79,7 @@ int Part2()
         vecB = -vecA;
         path.Clear();
         for (dist2 = dist + Penalty;
-            !walls[pos] && pos != end;
+            dists[pos] > 0 && pos != end;
             pos += vec, ++dist, ++dist2)
         {
             if (TryAdd2(pos, dist2, path))
