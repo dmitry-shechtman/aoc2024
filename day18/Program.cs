@@ -7,6 +7,8 @@ var points = input.Split('\n')
     .ToArray();
 
 VectorRange range = points.Range();
+Size size = new(range);
+
 HashSet<Vector> balls = new();
 Queue<QueueItem> queue = new();
 Vector[] headings = Grid.Headings;
@@ -34,16 +36,16 @@ bool TryFindShortestPath(int index, out int dist)
     Vector pos;
     balls.Clear();
     points[..index].All(balls.Add);
-    range.Border(-1).All(balls.Add);
     queue.Clear();
     queue.Enqueue(default);
     while (queue.TryDequeue(out var item) && (dist = ++item.Dist) > 0)
-        foreach (var vec in Grid.Headings)
-            if (vec != item.Vec && balls.Add(pos = item.Pos + vec))
-                if (pos == range.Max)
-                    return true;
-                else
-                    queue.Enqueue(new(pos, -vec, dist));
+        foreach (var vec in headings)
+            if (vec != item.Vec && size.Contains(pos = item.Pos + vec))
+                if (balls.Add(pos))
+                    if (pos == range.Max)
+                        return true;
+                    else
+                        queue.Enqueue(new(pos, -vec, dist));
     dist = 0;
     return false;
 }
