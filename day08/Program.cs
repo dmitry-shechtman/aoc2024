@@ -2,7 +2,7 @@
 using aoc.Grids;
 
 var s = File.ReadAllText("input.txt").Trim();
-var m = MultiGrid.Parse(s, char.IsLetterOrDigit, out Size z);
+var m = MultiGrid.Parse(s, char.IsLetterOrDigit, out var z);
 
 Console.WriteLine(Solve(1, 1));
 Console.WriteLine(Solve(0, Math.Max(z.Width, z.Height)));

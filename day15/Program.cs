@@ -17,7 +17,7 @@ var s = File.ReadAllText("input.txt")
     .Trim();
 
 var index = s.IndexOf("\n\n");
-var multi = MultiGrid.Parse(s[..index], cc, out Size size);
+var multi = MultiGrid.Parse(s[..index], cc, out var range);
 var path = Grid.ParseVectors(s[index..], '\n');
 
 int[] grid;
@@ -58,8 +58,8 @@ int Solve(Matrix even, Matrix odd, int left, int right)
 void Init(Matrix even, Matrix odd, int left, int right)
 {
     pos = multi[ROBOT].Single() * even;
-    size = new((Vector)size * even);
-    grid = new int[size.Length];
+    range = (range.Min * even, range.Max * odd);
+    grid = new int[range.Length];
     foreach (var box in multi[WALL])
         SetValue(box * even, WALL);
     foreach (var box in multi[WALL])
@@ -95,24 +95,24 @@ bool TryAddBox(Vector pos, Vector vec, int value)
 int GetScore()
 {
     var total = 0;
-    for (int y = 0, i = 0; y < size.Height; y++)
-        for (int x = 0; x < size.Width; x++, i++)
+    for (int y = 0, i = 0; y < range.Height; y++)
+        for (int x = 0; x < range.Width; x++, i++)
             if (grid[i] == LEFT || grid[i] == BOX)
                 total += Score.Dot((x, y));
     return total;
 }
 
 int GetValue(Vector pos) =>
-    grid[pos.y * size.Width + pos.x];
+    grid[pos.y * range.Width + pos.x];
 
 void SetValue(Vector pos, int value) =>
-    grid[pos.y * size.Width + pos.x] = value;
+    grid[pos.y * range.Width + pos.x] = value;
 
 string GetString(Vector pos)
 {
-    char[] chars = new char[(size.Width + 1) * size.Height];
-    for (int y = 0, i = 0, j = 0; y < size.Height; y++, chars[j++] = '\n')
-        for (int x = 0; x < size.Width; x++, i++)
+    char[] chars = new char[(range.Width + 1) * range.Height];
+    for (int y = 0, i = 0, j = 0; y < range.Height; y++, chars[j++] = '\n')
+        for (int x = 0; x < range.Width; x++, i++)
             chars[j++] = pos == (x, y) ? '@' : ".[]O#"[grid[i]];
     return new string(chars);
 }

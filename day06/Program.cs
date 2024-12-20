@@ -3,7 +3,7 @@ using aoc.Grids;
 using static aoc.Grids.Grid;
 
 var s = File.ReadAllText("input.txt");
-var m = MultiGrid.Parse(s, "^>v<#", out Size z);
+var m = MultiGrid.Parse(s, "^>v<#", out var z);
 var g = m[^2];
 var h = m[..^2].FindIndex(g => g.Any());
 var o = m[h].Single();
