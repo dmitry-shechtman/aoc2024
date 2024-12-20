@@ -2,7 +2,7 @@
 using aoc.Grids;
 
 var s = File.ReadAllText("input.txt").Trim();
-var m = MultiGrid.Parse(s, "0123456789");
+var m = MultiGrid.Parse(s);
 
 Console.WriteLine(Part1());
 Console.WriteLine(Part2());
