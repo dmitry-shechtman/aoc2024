@@ -4,8 +4,9 @@ using aoc.Grids;
 const int Penalty = 1000;
 
 var input = File.ReadAllText("input.txt").Trim();
-var multi = MultiGrid.Parse(input, "#SE");
-var (walls, start, end) = (multi[0], multi[1].Single(), multi[2].Single());
+var walls = Grid.Parse(input, out Size size);
+var start = size.FindChar(input, 'S');
+var end   = size.FindChar(input, 'E');
 
 Dictionary<Vector, int> dists =
     walls.ToDictionary(p => p, _ => 0);
