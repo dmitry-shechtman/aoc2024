@@ -17,7 +17,7 @@ var s = File.ReadAllText("input.txt")
     .Trim();
 
 var index = s.IndexOf("\n\n");
-var multi = MultiGrid.Parse(s[..index], cc, out var size);
+var multi = MultiGrid.Parse(s[..index], cc, out Size size);
 var path = Grid.ParseVectors(s[index..], '\n');
 
 int[] grid;
