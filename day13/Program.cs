@@ -1,16 +1,12 @@
 ﻿using aoc;
 using Matrix = aoc.DoubleMatrix;
-using System.Text.RegularExpressions;
-
-Regex Regex = new(@"^Button A: X\+(\d+), Y\+(\d+)\nButton B: X\+(\d+), Y\+(\d+)\nPrize: X=(\d+), Y=(\d+)$");
 
 Matrix Shift = Matrix.FromColumns(default, default, (10000000000000, 10000000000000));
 
 var input = File.ReadAllText("input.txt").Trim();
 
 var machines = input.Split("\n\n")
-    .Select(Regex.GetValues<double>)
-    .Select1(Matrix.FromColumns)
+    .Select(Matrix.ParseColumnsAny)
     .ToArray();
 
 Console.WriteLine(Part1());
