@@ -3,9 +3,9 @@
 Regex regex = new(@"^(Register \w: (?<reg>\d+)\n)+\nProgram: ((?<prg>[0-7]),)+(?<prg>[0-7])$");
 
 var input = File.ReadAllText("input.txt").Trim();
-var values = regex.SelectAllValues<int>(input);
-var reg = values["reg"].ToArray();
-var prg = values["prg"].ToArray();
+var values = regex.GetAllValues<int>(input, ^2..);
+var reg = values["reg"];
+var prg = values["prg"];
 
 Console.WriteLine(Part1());
 Console.WriteLine(Part2());
