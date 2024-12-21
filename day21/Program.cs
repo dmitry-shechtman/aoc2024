@@ -56,16 +56,15 @@ void Set(int start, params Vector[] pad)
         for (int j = 0, b = j + start; j < pad.Length - 1; ++j, ++b)
             mins[KEYS[a], KEYS[b]] = new(new[] {
                 KeyValuePair.Create(0, (long)(paths[KEYS[a], KEYS[b]] =
-                GetPaths(pad[i], pad[j], pad[^1]).ToArray())[0].Length) });
+                    GetPaths(pad[i], pad[j], pad[^1]).ToArray())[0].Length) });
 }
 
 IEnumerable<string> GetPaths(Vector start, Vector end, Vector wall)
 {
     queue.Enqueue(start, string.Empty);
     while (queue.TryDequeue(out var pos, out var path))
-        if (pos != wall)
-            if (!TryAdd(pos, end, path))
-                yield return $"{path}A";
+        if (pos != wall && !TryAdd(pos, end, path))
+            yield return $"{path}A";
 }
 
 bool TryAdd(Vector pos, Vector end, string path)
