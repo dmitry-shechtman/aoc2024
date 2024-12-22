@@ -7,8 +7,4 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\..\aoc\aoc\aoc.csproj" />
-  </ItemGroup>
-
 </Project>
