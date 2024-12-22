@@ -18,9 +18,9 @@ long Part2() =>
 
 long MoveNext(long secret, int _ = 0)
 {
-    secret = (secret ^ (secret << 6)) % 16777216;
-    secret = (secret ^ (secret >> 5)) % 16777216;
-    secret = (secret ^ (secret << 11)) % 16777216;
+    secret = (secret ^ (secret << 6)) & 0xFFFFFF;
+    secret = (secret ^ (secret >> 5));
+    secret = (secret ^ (secret << 11)) & 0xFFFFFF;
     return secret;
 }
 
