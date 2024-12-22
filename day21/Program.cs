@@ -1,16 +1,18 @@
 ﻿using aoc;
-using System.Collections.Concurrent;
 
-const int MAGIC = 256;
+const int MAGIC = 256, MAXDEPTH = 25;
+const int N = 0, A = 4;
 const string KEYS = "^>v<A0123456789";
 
 var input = File.ReadAllText("input.txt").Trim()
     .Split('\n');
 
-string[,][] paths = new string[MAGIC, MAGIC][];
+int[] index = new int[256];
+for (int i = 0; i < KEYS.Length; i++)
+    index[KEYS[i]] = i;
 
-ConcurrentDictionary<int, long>[,] mins =
-    new ConcurrentDictionary<int, long>[MAGIC, MAGIC];
+string[] paths = new string[MAGIC];
+long[][] mins = new long[MAGIC][];
 
 PriorityQueue<Vector, string> queue = new();
 Init();
@@ -22,30 +24,24 @@ long Solve(int depth) =>
     input.Sum(s =>
         int.Parse(s[..^1]) * GetMin(s, depth));
 
-long GetMin(string source, int depth) =>
-    $"A{source}".Zip(source, (c, d) =>
-        GetMinPair(c, d, depth)).Sum();
+long GetMin(string source, int depth)
+{
+    long sum = 0L;
+    for (int i = 0, prev = A, curr; i < source.Length; i++, prev = curr)
+        sum += GetMinPair(prev << 4 | (curr = index[source[i]]), depth);
+    return sum;
+}
 
-long GetMinPair(int c, int d, int depth) =>
-    mins[c, d].GetOrAdd(depth, _ =>
-        paths[c, d].Min(s => GetMin(s, depth - 1)));
-
-int FindMin(string source, int depth) =>
-    FindPaths($"A{source}").Select(s => depth > 0
-        ? FindMin(s, depth - 1)
-        : s.Length).Min();
-
-IEnumerable<string> FindPaths(string source) =>
-    source.Length > 1
-        ? paths[source[0], source[1]].SelectMany(s =>
-            FindPaths(source[1..]).Select(t => $"{s}{t}"))
-        : new[] { string.Empty };
+long GetMinPair(int index, int depth) =>
+    mins[index][depth] > 0
+        ? mins[index][depth]
+        : mins[index][depth] = GetMin(paths[index], depth - 1);
 
 void Init()
 {
-    Set(0,
+    Set(N,
         (1, 0), (2, 1), (1, 1), (0, 1), (2, 0), (0, 0));
-    Set(4,
+    Set(A,
         (2, 3), (1, 3), (0, 2), (1, 2), (2, 2), (0, 1),
         (1, 1), (2, 1), (0, 0), (1, 0), (2, 0), (0, 3));
 }
@@ -53,18 +49,26 @@ void Init()
 void Set(int start, params Vector[] pad)
 {
     for (int i = 0, a = i + start; i < pad.Length - 1; ++i, ++a)
+    {
         for (int j = 0, b = j + start; j < pad.Length - 1; ++j, ++b)
-            mins[KEYS[a], KEYS[b]] = new(new[] {
-                KeyValuePair.Create(0, (long)(paths[KEYS[a], KEYS[b]] =
-                    GetPaths(pad[i], pad[j], pad[^1]).ToArray())[0].Length) });
+        {
+            mins[a << 4 | b] = new long[MAXDEPTH + 1];
+            mins[a << 4 | b][0] = (paths[a << 4 | b] =
+                GetPath(pad[i], pad[j], pad[^1])).Length;
+        }
+    }
 }
 
-IEnumerable<string> GetPaths(Vector start, Vector end, Vector wall)
+string GetPath(Vector start, Vector end, Vector wall)
 {
+    var min = (rank: int.MaxValue, path: string.Empty);
+    int rank;
     queue.Enqueue(start, string.Empty);
     while (queue.TryDequeue(out var pos, out var path))
         if (pos != wall && !TryAdd(pos, end, path))
-            yield return $"{path}A";
+            if ((rank = Rank(path)) < min.rank)
+                min = (rank, path);
+    return $"{min.path}A";
 }
 
 bool TryAdd(Vector pos, Vector end, string path)
@@ -80,4 +84,18 @@ bool TryAdd(Vector pos, Vector end, string path)
     else if (pos.y < end.y)
         queue.Enqueue(pos + (0, 1), $"{path}v");
     return true;
+}
+
+int Rank(string path)
+{
+    if (path.Length < 2)
+        return 0;
+    var (i, turned) = (0, false);
+    while (i < path.Length - 1)
+        if (path[i] != path[++i])
+            if (turned)
+                return int.MaxValue;
+            else
+                turned = true;
+    return Math.Max(1, index[path[i]]);
 }
