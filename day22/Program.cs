@@ -14,7 +14,7 @@ long Part1() =>
     input.Sum(x => Enumerable.Range(0, 2000).Aggregate(x, MoveNext));
 
 long Part2() =>
-    input.AsParallel().Aggregate(0, Max);
+    input.AsParallel().Max(Max);
 
 long MoveNext(long secret, int _ = 0)
 {
@@ -24,8 +24,9 @@ long MoveNext(long secret, int _ = 0)
     return secret;
 }
 
-int Max(int max, long sec)
+int Max(long sec)
 {
+    int max = 0;
     HashSet<Vector4D> seen = new();
     Vector4D key = default;
     for (var (prev, curr, i) = (0, 0, 0); i <= 2000; sec = MoveNext(sec), ++i)
