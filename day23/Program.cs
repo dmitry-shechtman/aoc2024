@@ -1,55 +1,106 @@
-﻿using System.Collections.Concurrent;
+﻿using aoc;
 
 var input = File.ReadAllLines("input.txt");
 
-ConcurrentDictionary<int, HashSet<int>> graph = new(1, 1024);
+var graph = BuildGraph(out var keys);
 
-BuildGraph();
 Console.WriteLine(Part1());
 Console.WriteLine(Part2());
 
-void BuildGraph()
+BitSet[] BuildGraph(out int[] keys)
 {
-    foreach (var s in input)
+    (keys, var values) = BuildIndex();
+
+    var graph = new BitSet[keys.Length];
+    for (int i = 0; i < graph.Length; i++)
+        graph[i] = new(graph.Length);
+
+    for (int i = 0; i < input.Length; i++)
     {
-        var a = (s[0] & 0x1F) << 5 | s[1] & 0x1F;
-        var b = (s[3] & 0x1F) << 5 | s[4] & 0x1F;
-        graph.GetOrAdd(a, _ => new()).Add(b);
-        graph.GetOrAdd(b, _ => new()).Add(a);
+        var x = values[GetIndex(input[i])];
+        var y = values[GetIndex(input[i].AsSpan()[3..])];
+        graph[x][y] = graph[y][x] = true;
     }
+
+    return graph;
 }
 
-int Part1() => graph.SelectMany(t =>
-    t.Value.SelectMany(b =>
-        graph[b].Intersect(t.Value).Select(c =>
-            new[] { t.Key, b, c })
-                .Where(abc => abc.Any(v => (v >> 5 & 0x1F) == 0x14))
-                .Select(abc => abc.Order().Aggregate((a, v) => a << 10 | v))))
-    .Distinct().Count();
+(int[] keys, int[] values) BuildIndex()
+{
+    HashSet<int> keys = new(1024);
+    int[] values = new int[0x400];
+
+    for (int i = 0; i < input.Length; i++)
+    {
+        var a = GetIndex(input[i]);
+        if (keys.Add(a))
+            values[a] = keys.Count - 1;
+    }
+
+    return (keys.ToArray(), values);
+}
+
+int Part1()
+{
+    int count = 0;
+    for (int a = 0; a < graph.Length; a++)
+        for (int b = a + 1; b < graph.Length; b++)
+            if (graph[a][b])
+                for (int c = b + 1; c < graph.Length; c++)
+                    count += graph[a][c] && graph[b][c] &&
+                        (IsMatch(a) || IsMatch(b) || IsMatch(c)) ? 1 : 0;
+    return count;
+}
 
 string Part2()
 {
-    var clique = BronKerbosch(new(), new(graph.Keys), new(), new());
-    return string.Join(',', clique.Order().Select(v =>
-        $"{(char)(v >> 5 | 0x60)}{(char)(v & 0x1F | 0x60)}"));
+    var count = graph.Length;
+    BitSet r = new(count);
+    BitSet p = new(count, true);
+    BitSet x = new(count);
+    BitSet c = new(count);
+    var clique = BronKerbosch(r, p, x, c);
+
+    var names = new int[clique.CountSet()];
+    int k = 0;
+    foreach (var i in clique)
+        names[k++] = keys[i];
+
+    names.Sort();
+
+    Span<char> chars = stackalloc char[names.Length * 3 - 1];
+    for (int i = 0, j = 0; i < names.Length; i++)
+    {
+        if (j > 0)
+            chars[j++] = ',';
+        chars[j++] = (char)(names[i] >> 5 & 0x1F | 0x60);
+        chars[j++] = (char)(names[i]      & 0x1F | 0x60);
+    }
+
+    return new(chars);
 }
 
-List<int> BronKerbosch(List<int> r, HashSet<int> p, HashSet<int> x, List<int> c)
+int GetIndex(ReadOnlySpan<char> key) =>
+    (key[0] & 0x1F) << 5 | key[1] & 0x1F;
+
+bool IsMatch(int index) =>
+    (keys[index] & 0x3E0) == 0x280;
+
+BitSet BronKerbosch(BitSet r, BitSet p, BitSet x, BitSet c)
 {
-    List<int> s;
-    HashSet<int> n, q, y;
-    if (!p.Any() && !x.Any())
-        return r.Count > c.Count ? r : c;
-    var pivot = p.Concat(x).First();
-    foreach (var node in p.Except(graph[pivot]))
+    if (p.CountSet() == 0 && x.CountSet() == 0)
+        return r.CountSet() > c.CountSet() ? r : c;
+    int pivot = p.Clone().Or(x).FirstSet(out _);
+    BitSet n, s, q, y;
+    foreach (int i in p.Clone().AndNot(graph[pivot]))
     {
-        s = new(r) { node };
-        n = graph[node];
-        q = new(p.Intersect(n));
-        p.Remove(node);
-        y = new(x.Intersect(n));
-        x.Add(node);
+        n = graph[i];
+        s = r.Clone().ThenSet(i, true);
+        q = p.Clone().And(n);
+        y = x.Clone().And(n);
         c = BronKerbosch(s, q, y, c);
+        p[i] = false;
+        x[i] = true;
     }
     return c;
 }
