@@ -1,12 +1,11 @@
 ﻿using aoc;
-using aoc.Grids;
 using static aoc.Grids.Grid;
 
-var s = File.ReadAllText("input.txt");
-var m = MultiGrid.Parse(s, "^>v<#", out var z);
-var g = m[^2];
-var h = m[..^2].FindIndex(g => g.Any());
-var o = m[h].Single();
+var s = File.ReadAllText("input.txt").AsSpan().Trim();
+var p = new Vector[4];
+var g = Parse(s, "^>v<", p, out var z);
+var h = p.FindIndex(r => r != default);
+var o = p[h];
 
 Dictionary<Vector, int> qq = new();
 Walk(g, o, h, qq);

@@ -3,10 +3,10 @@ using aoc.Grids;
 
 const int Penalty = 1000;
 
-var input = File.ReadAllText("input.txt").Trim();
-var walls = Grid.Parse(input, out var range);
-var start = range.FindChar(input, 'S');
-var end   = range.FindChar(input, 'E');
+var input = File.ReadAllText("input.txt").AsSpan().Trim();
+var points = new Vector[2];
+var walls = Grid.Parse(input, "SE", points);
+var (start, end) = (points[0], points[1]);
 
 Dictionary<Vector, int> dists =
     walls.ToDictionary(p => p, _ => 0);
