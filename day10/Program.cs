@@ -14,4 +14,4 @@ int Part1() => m[0].Sum(p =>
 int Part2() =>
     m[1..10].Aggregate(m[0].AsEnumerable(), (a, g) =>
         a.SelectMany(p =>
-            g.GetNeighbors(p).Where(g.Contains))).Count();
+            Grid.GetNeighbors(p).Where(g.Contains))).Count();
