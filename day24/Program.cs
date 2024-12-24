@@ -1,16 +1,14 @@
-﻿using aoc;
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 
 Regex regex = new(@"^((?<k>[xy]\d\d): (?<v>0|1)\n)+(\n(?<a>[a-w][a-w\d]{2}|[xy]\d\d) (?<op>AND|OR|XOR) (?<b>[a-w][a-w\d]{2}|[xy]\d\d) -> (?<c>(z\d\d|[a-w][a-w\d]{2})))+$");
 
 var input = File.ReadAllText("input.txt").Trim();
-var vals = regex.GetAllValues<string>(input);
+var vals = regex.GetAllValues(input);
 
-var gates = vals["c"]
-    .Select((k, i) =>
+var gates = vals["c"].Select((k, i) =>
         (k, v: new Gate(ParseOp(vals["op"][i]), vals["a"][i], vals["b"][i])))
-    .Concat(vals["k"]
-        .Select((k, i) => (k, v: new Gate((Op)(vals["v"][i][0] - '0'), "", ""))))
+    .Concat(vals["k"].Select((k, i) =>
+        (k, v: new Gate((Op)(vals["v"][i][0] - '0'), "", ""))))
     .ToDictionary(t => t.k, t => t.v);
 
 Console.WriteLine(Part1());
