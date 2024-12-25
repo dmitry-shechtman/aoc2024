@@ -20,10 +20,8 @@ long Part1() =>
 
 long GetValue(string key) => gates[key] switch
 {
-    ("0", _, _) => 0,
-    ("1", _, _) => 1,
     ("AND", var a, var b) => GetValue(a) & GetValue(b),
     ("OR",  var a, var b) => GetValue(a) | GetValue(b),
     ("XOR", var a, var b) => GetValue(a) ^ GetValue(b),
-    _ => throw new()
+    (var op, _, _) => long.Parse(op)
 };
