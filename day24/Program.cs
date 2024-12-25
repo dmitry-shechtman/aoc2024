@@ -1,6 +1,6 @@
 ﻿using System.Text.RegularExpressions;
 
-Regex regex = new(@"^((?<k>[xy]\d\d): (?<v>0|1)\n)+(\n(?<a>[a-w][a-w\d]{2}|[xy]\d\d) (?<op>AND|OR|XOR) (?<b>[a-w][a-w\d]{2}|[xy]\d\d) -> (?<c>(z\d\d|[a-w][a-w\d]{2})))+$");
+Regex regex = new(@"^((?<k>[xy]\d\d): (?<v>0|1)\n)+(\n(?<a>[a-w]{3}|[xy]\d\d) (?<op>AND|OR|XOR) (?<b>[a-w]{3}|[xy]\d\d) -> (?<c>(z\d\d|[a-w]{3})))+$");
 
 var input = File.ReadAllText("input.txt").Trim();
 var vals = regex.GetAllValues(input);
