@@ -1,12 +1,11 @@
-﻿var s = File.OpenText("input.txt");
-var v = new List<int[]>[] { new(), new() };
+﻿var s = File.ReadAllText("input.txt");
+var v = new List<long>[] { new(), new() };
 
-for (int k, x, y; s.Peek() >= 0; s.Read())
-    for (y = 0, k = s.Peek() & 1, v[k].Add(new int[5]); y < 7; ++y, s.Read())
-        for (x = 0; x < 5; ++x)
-            v[k][^1][x] += s.Read() & 1;
+for (int i = 0, j, k; i < s.Length; ++i)
+    for (j = 0, k = s[i] & 1, v[k].Add(0); j < 42; ++j)
+        v[k][^1] |= (s[i++] & 1L) << j;
 
 Console.WriteLine(Part1());
 
 int Part1() =>
-    v[0].Sum(a => v[1].Count(b => a.Zip(b, (a, b) => a + b < 8).All(_ => _)));
+    v[0].Sum(a => v[1].Count(b => (a & b) == 0));
