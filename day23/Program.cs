@@ -94,7 +94,7 @@ bool IsMatch(int index) =>
 
 BitSet BronKerbosch(BitSet r, BitSet p, BitSet x, BitSet c)
 {
-    if (p.CountSet() == 0 && x.CountSet() == 0)
+    if (!p.AnySet() && !x.AnySet())
         return r.CountSet() > c.CountSet() ? r : c;
     int pivot = p.Clone().Or(x).FirstSet(out _);
     BitSet n, s, q, y;
