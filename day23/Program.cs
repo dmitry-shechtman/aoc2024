@@ -2,16 +2,18 @@
 
 var input = File.ReadAllLines("input.txt");
 
-var graph = BuildGraph(out var keys);
+int[] keys = new int[1024];
+
+var graph = BuildGraph(out int min, out int max);
 
 Console.WriteLine(Part1());
 Console.WriteLine(Part2());
 
-BitSet[] BuildGraph(out List<int> keys)
+BitSet[] BuildGraph(out int min, out int max)
 {
-    (keys, var values) = BuildIndex();
+    var values = BuildIndex(out min, out max);
 
-    var graph = new BitSet[keys.Count];
+    var graph = new BitSet[values.Count];
     for (int i = 0; i < graph.Length; i++)
         graph[i] = new(graph.Length);
 
@@ -25,16 +27,24 @@ BitSet[] BuildGraph(out List<int> keys)
     return graph;
 }
 
-(List<int> keys, Dictionary<string, int> values) BuildIndex()
+Dictionary<string, int> BuildIndex(out int min, out int max)
 {
-    List<int> keys = new(1024);
+    BitSet set = new(1024);
+    foreach (string s in input)
+        set[GetIndex(s)] = true;
+
     Dictionary<string, int> values = new(1024);
 
-    foreach (string s in input)
-        if (values.TryAdd(s[..2], keys.Count))
-            keys.Add(GetIndex(s));
+    (min, max) = (0, 0);
+    for (int i = set.FirstSet(out var v), j = 0; i >= 0; i = set.NextSet(i, ref v))
+    {
+        if ((i & 0x3E0) == 0x280)
+            (min, max) = (min == 0 ? j : min, j);
+        var key = $"{(char)(i >> 5 | 0x60)}{(char)(i & 0x1F | 0x60)}";
+        (keys[j], values[key]) = (i, j++);
+    }
 
-    return (keys, values);
+    return values;
 }
 
 int Part1()
@@ -67,20 +77,14 @@ string Part2()
     BitSet c = new(count);
     var clique = BronKerbosch(r, p, x, c);
 
-    var names = new int[clique.CountSet()];
-    int k = 0;
+    Span<char> chars = stackalloc char[clique.CountSet() * 3 - 1];
+    int j = 0;
     foreach (var i in clique)
-        names[k++] = keys[i];
-
-    names.Sort();
-
-    Span<char> chars = stackalloc char[names.Length * 3 - 1];
-    for (int i = 0, j = 0; i < names.Length; i++)
     {
         if (j > 0)
             chars[j++] = ',';
-        chars[j++] = (char)(names[i] >> 5 & 0x1F | 0x60);
-        chars[j++] = (char)(names[i]      & 0x1F | 0x60);
+        chars[j++] = (char)(keys[i] >> 5 & 0x1F | 0x60);
+        chars[j++] = (char)(keys[i]      & 0x1F | 0x60);
     }
 
     return new(chars);
@@ -90,7 +94,7 @@ int GetIndex(ReadOnlySpan<char> key) =>
     (key[0] & 0x1F) << 5 | key[1] & 0x1F;
 
 bool IsMatch(int index) =>
-    (keys[index] & 0x3E0) == 0x280;
+    index >= min && index <= max;
 
 BitSet BronKerbosch(BitSet r, BitSet p, BitSet x, BitSet c)
 {
