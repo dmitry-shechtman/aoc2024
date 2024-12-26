@@ -40,12 +40,21 @@ BitSet[] BuildGraph(out List<int> keys)
 int Part1()
 {
     int count = 0;
+    BitSet setA, setAB;
     for (int a = 0; a < graph.Length; a++)
-        for (int b = a + 1; b < graph.Length; b++)
-            if (graph[a][b])
-                for (int c = b + 1; c < graph.Length; c++)
-                    count += graph[a][c] && graph[b][c] &&
-                        (IsMatch(a) || IsMatch(b) || IsMatch(c)) ? 1 : 0;
+    {
+        setA = graph[a];
+        for (int b = setA.FirstSet(a + 1, out var u); b >= 0;
+            b = setA.NextSet(b, ref u))
+        {
+            setAB = setA.Clone().And(graph[b]);
+            for (int c = setAB.FirstSet(b + 1, out var v); c >= 0;
+                c = setAB.NextSet(c, ref v))
+            {
+                count += IsMatch(a) || IsMatch(b) || IsMatch(c) ? 1 : 0;
+            }
+        }
+    }
     return count;
 }
 
