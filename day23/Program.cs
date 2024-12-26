@@ -7,37 +7,34 @@ var graph = BuildGraph(out var keys);
 Console.WriteLine(Part1());
 Console.WriteLine(Part2());
 
-BitSet[] BuildGraph(out int[] keys)
+BitSet[] BuildGraph(out List<int> keys)
 {
     (keys, var values) = BuildIndex();
 
-    var graph = new BitSet[keys.Length];
+    var graph = new BitSet[keys.Count];
     for (int i = 0; i < graph.Length; i++)
         graph[i] = new(graph.Length);
 
-    for (int i = 0; i < input.Length; i++)
+    foreach (string s in input)
     {
-        var x = values[GetIndex(input[i])];
-        var y = values[GetIndex(input[i].AsSpan()[3..])];
+        var x = values[s[..2]];
+        var y = values[s[3..]];
         graph[x][y] = graph[y][x] = true;
     }
 
     return graph;
 }
 
-(int[] keys, int[] values) BuildIndex()
+(List<int> keys, Dictionary<string, int> values) BuildIndex()
 {
-    HashSet<int> keys = new(1024);
-    int[] values = new int[0x400];
+    List<int> keys = new(1024);
+    Dictionary<string, int> values = new(1024);
 
-    for (int i = 0; i < input.Length; i++)
-    {
-        var a = GetIndex(input[i]);
-        if (keys.Add(a))
-            values[a] = keys.Count - 1;
-    }
+    foreach (string s in input)
+        if (values.TryAdd(s[..2], keys.Count))
+            keys.Add(GetIndex(s));
 
-    return (keys.ToArray(), values);
+    return (keys, values);
 }
 
 int Part1()
