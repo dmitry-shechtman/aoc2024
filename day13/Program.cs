@@ -4,10 +4,7 @@ using Matrix = aoc.DoubleMatrix;
 Matrix Shift = Matrix.FromColumns(default, default, (10000000000000, 10000000000000));
 
 var input = File.ReadAllText("input.txt").Trim();
-
-var machines = input.Split("\n\n")
-    .Select(Matrix.ParseColumnsAny)
-    .ToArray();
+var machines = Matrix.ParseColumnsAll(input, 3);
 
 Console.WriteLine(Part1());
 Console.WriteLine(Part2());
