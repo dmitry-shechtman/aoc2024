@@ -6,11 +6,7 @@ Regex Regex = new(@"^Button A: X\+(\d+), Y\+(\d+)\nButton B: X\+(\d+), Y\+(\d+)\
 Matrix Shift = Matrix.FromColumns(default, default, (10000000000000, 10000000000000));
 
 var input = File.ReadAllText("input.txt").Trim();
-
-var machines = input.Split("\n\n")
-    .Select(Regex.GetLongs)
-    .Select(FromLongs)
-    .ToArray();
+var machines = Matrix.ParseColumnsAll(input, 3);
 
 Console.WriteLine(Part1());
 Console.WriteLine(Part2());
