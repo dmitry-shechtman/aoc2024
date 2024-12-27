@@ -36,7 +36,7 @@ Dictionary<string, int> BuildIndex(out int min, out int max)
     Dictionary<string, int> values = new(1024);
 
     (min, max) = (0, 0);
-    for (int i = set.FirstSet(out var v), j = 0; i >= 0; i = set.NextSet(i, ref v))
+    for (int i = set.FirstSet(), j = 0; i >= 0; i = set.NextSet(i))
     {
         if ((i & 0x3E0) == 0x280)
             (min, max) = (min == 0 ? j : min, j);
@@ -54,12 +54,10 @@ int Part1()
     for (int a = 0; a < graph.Length; a++)
     {
         setA = graph[a];
-        for (int b = setA.FirstSet(a + 1, out var u); b >= 0;
-            b = setA.NextSet(b, ref u))
+        for (int b = setA.NextSet(a); b >= 0; b = setA.NextSet(b))
         {
             setAB = setA.Clone().And(graph[b]);
-            for (int c = setAB.FirstSet(b + 1, out var v); c >= 0;
-                c = setAB.NextSet(c, ref v))
+            for (int c = setAB.NextSet(b); c >= 0; c = setAB.NextSet(c))
             {
                 count += IsMatch(a) || IsMatch(b) || IsMatch(c) ? 1 : 0;
             }
@@ -100,7 +98,7 @@ BitSet BronKerbosch(BitSet r, BitSet p, BitSet x, BitSet c)
 {
     if (!p.AnySet() && !x.AnySet())
         return r.CountSet() > c.CountSet() ? r : c;
-    int pivot = p.Clone().Or(x).FirstSet(out _);
+    int pivot = p.Clone().Or(x).FirstSet();
     BitSet n, s, q, y;
     foreach (int i in p.Clone().AndNot(graph[pivot]))
     {
