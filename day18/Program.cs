@@ -8,10 +8,8 @@ var (filename, index) = args.Length switch
     _ => (args[0], int.Parse(args[1]))
 };
 
-var input = File.ReadAllText(filename).Trim();
-var points = input.Split('\n')
-    .Select(Vector.Parse)
-    .ToArray();
+var input = File.ReadAllText(filename);
+var points = Vector.ParseAll(input);
 
 VectorRange range = points.Range();
 Size size = new(range);
