@@ -1,6 +1,6 @@
 ﻿using System.Text.RegularExpressions;
 
-using ANF = System.Collections.Generic.SortedSet<System.UInt128>;
+using ANF = System.Collections.Generic.SortedSet<aoc.BitSet>;
 
 const int COUNT = 64;
 const int Z00 = COUNT * 2;
@@ -50,8 +50,8 @@ Gate[] BuildCircuit(out string[] keys, out int[] values)
 (string[] keys, int[] values) BuildIndex()
 {
     List<string> keys = new();
-    for (int i = 0; i < COUNT; i++)
-        foreach (var c in "xy")
+    foreach (var c in "xy")
+        for (int i = 0; i < COUNT; i++)
             keys.Add($"{c}{i:d02}");
 
     foreach (var key in vals["c"])
@@ -94,13 +94,16 @@ void BuildExpected()
 {
     exps = new ANF[COUNT];
 
-    for (var (i, m) = (0, UInt128.One); i < zCount; i++, m <<= 2)
+    for (var (i, m) = (0, 1L); i < zCount; i++, m <<= 1)
     {
-        ANF exp = new() { m, m << 1 }; // x_i XOR y_i
-        if (i == zCount - 1) // Last bit
-            exp.Clear(); // No x_i XOR y_i
+        ANF exp = new();
+        if (i < zCount - 1) // Skip last bit
+        {
+            exp.Add(new(m, 0L)); // x_i maps to 2^i
+            exp.Add(new(0L, m)); // y_i maps to 2^i+64
+        }
         if (i > 0) // Skip bit 0
-            exp.Add(m >> 1 | m >> 2); // Carry
+            exp.Add(new(m >> 1, m >> 1)); // Carry
         exps[i] = exp;
     }
 }
@@ -111,8 +114,11 @@ void BuildActual()
     anfs = new ANF[gates.Length];
 
     // Initialize input variables
-    for (var (i, m) = (0, UInt128.One); i < Z00; i++, m <<= 1)
-        anfs[i] = new() { m }; // x_i maps to 2^2i
+    for (var (i, m) = (0, 1L); i < COUNT; i++, m <<= 1)
+    {
+        anfs[i]         = new() { new(m, 0L) };
+        anfs[i + COUNT] = new() { new(0L, m) };
+    }
 
     // Add gates to the array
     for (int i = Z00; i < gates.Length; i++)
@@ -143,9 +149,14 @@ ANF Multiply(ANF anf1, ANF anf2)
 {
     ANF result = new();
     foreach (var term1 in anf1)
+    {
         foreach (var term2 in anf2)
-            if (!result.Remove(term1 ^ term2))
-                result.Add(term1 ^ term2);
+        {
+            var term = term1.Clone().Xor(term2);
+            if (!result.Remove(term))
+                result.Add(term);
+        }
+    }
     return result;
 }
 
