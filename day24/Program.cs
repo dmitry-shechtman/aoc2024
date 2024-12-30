@@ -5,7 +5,7 @@ using ANF = System.Collections.Generic.SortedSet<System.UInt128>;
 const int COUNT = 64;
 const int Z00 = COUNT * 2;
 
-Regex regex = new(@"^((?<k>[xy]\d\d): (?<v>0|1)\n)+(\n(?<a>[a-w]{3}|[xy]\d\d) (?<op>AND|OR|XOR) (?<b>[a-w]{3}|[xy]\d\d) -> (?<c>(z\d\d|[a-w]{3})))+$");
+Regex regex = new(@"^((?<k>[xy]\d\d): (?<v>0|1)\n)+(\n((?<a>[a-w]{3}|[xy]\d\d) (?<op>AND|OR|XOR)|NOT) (?<b>[a-w]{3}|[xy]\d\d) -> (?<c>(z\d\d|[a-w]{3})))+$");
 
 var input = File.ReadAllText("input.txt").Trim();
 var vals = regex.GetAllValues(input);
@@ -38,8 +38,10 @@ Gate[] BuildCircuit(out string[] keys, out int[] values)
 
     var gates = new Gate[keys.Length];
 
-    for (int i = 0; i < vals["c"].Length; i++)
-        gates[Get("c", i)] = new(ParseOp(vals["op"][i]), Get("a", i), Get("b", i));
+    for (int i = 0, j = 0; i < vals["c"].Length; i++)
+        gates[Get("c", i)] = vals["op"][i] != "NOT"
+            ? new(ParseOp(vals["op"][i]), Get("a", j++), Get("b", i))
+            : new(Op.NOT, Get("b", i), Get("b", i));
 
     for (int i = 0; i < vals["k"].Length; i++)
         gates[Get("k", i)] = new((Op)(vals["v"][i][0] - '0'), 0, 0);
@@ -75,6 +77,7 @@ int GetIndex(string key) =>
 
 long GetValue(int index) => gates[index] switch
 {
+    (Op.NOT, var a, _)     => GetValue(a) ^ 1,
     (Op.AND, var a, var b) => GetValue(a) & GetValue(b),
     (Op.OR,  var a, var b) => GetValue(a) | GetValue(b),
     (Op.XOR, var a, var b) => GetValue(a) ^ GetValue(b),
@@ -83,6 +86,7 @@ long GetValue(int index) => gates[index] switch
 
 Op ParseOp(string op) => op switch
 {
+    "NOT" => Op.NOT,
     "AND" => Op.AND,
     "OR"  => Op.OR,
     "XOR" => Op.XOR,
@@ -131,12 +135,16 @@ ANF DoGetANF(int i)
     var b = GetANF(B);
     return Op switch
     {
+        Op.NOT => Negate(a),
         Op.AND => Multiply(a, b),
         Op.OR  => Add(Add(a, b), Multiply(a, b)),
         Op.XOR => Add(a, b),
         _ => throw new NotImplementedException(),
     };
 }
+
+// Negate an ANF (NOT operation)
+ANF Negate(ANF a) => new(a) { 0 };
 
 // Multiply two ANFs (AND operation)
 ANF Multiply(ANF anf1, ANF anf2)
@@ -177,10 +185,14 @@ bool? TrySwap(ANF anf, int i)
     if (DoTrySwap(anf, i))
         return true;
     var (op, a, b) = gates[i];
-    return op == Op.XOR
-        ? TrySwap(Add(anf, anfs[a]), b) == true ||
-          TrySwap(Add(anf, anfs[b]), a) == true
-        : null;
+    return op switch
+    {
+        Op.NOT => TrySwap(Negate(anf), a),
+        Op.XOR =>
+            TrySwap(Add(anf, anfs[a]), b) == true ||
+            TrySwap(Add(anf, anfs[b]), a) == true,
+        _ => null
+    };
 }
 
 // Look for an equivalent ANF; swap if found
@@ -203,6 +215,6 @@ bool TryFind(ANF anf, out int i)
     return false;
 }
 
-enum Op { NIL, ONE, AND, OR, XOR }
+enum Op { NIL, ONE, NOT, AND, OR, XOR }
 
 record struct Gate(Op Op, int A, int B);
