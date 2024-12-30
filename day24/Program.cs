@@ -27,7 +27,7 @@ string Part2()
     BuildExpected();
     do
         BuildActual();
-    while (TrySwapAny());
+    while (TrySwapAny() == true);
     return string.Join(',', swap);
 }
 
@@ -96,9 +96,9 @@ void BuildExpected()
 
     for (var (i, m) = (Z00, UInt128.One); gates[i] != default; i++, m <<= 2)
     {
-        ANF exp = new() { m, m << 1 };
+        ANF exp = new() { m, m << 1 }; // x_i XOR y_i
         if (gates[i + 1] == default) // Last bit
-            exp.Clear(); // No x_i or y_i
+            exp.Clear(); // No x_i XOR y_i
         if (i > Z00) // Skip bit 0
             exp.Add(m >> 1 | m >> 2); // Carry
         exps[i - Z00] = exp;
@@ -139,28 +139,28 @@ ANF DoGetANF(int i)
 }
 
 // Multiply two ANFs (AND operation)
-ANF Multiply(ANF left, ANF right)
+ANF Multiply(ANF anf1, ANF anf2)
 {
     ANF result = new();
-    foreach (var key1 in left)
-        foreach (var key2 in right)
-            if (!result.Remove(key1 ^ key2))
-                result.Add(key1 ^ key2);
+    foreach (var term1 in anf1)
+        foreach (var term2 in anf2)
+            if (!result.Remove(term1 ^ term2))
+                result.Add(term1 ^ term2);
     return result;
 }
 
 // Add two ANFs (XOR operation)
-ANF Add(ANF left, ANF right)
+ANF Add(ANF anf1, ANF anf2)
 {
-    ANF result = new(left);
-    foreach (var key in right)
-        if (!result.Remove(key))
-            result.Add(key);
+    ANF result = new(anf1);
+    foreach (var term in anf2)
+        if (!result.Remove(term))
+            result.Add(term);
     return result;
 }
 
 // Look for an invalid output; try swapping if found
-bool TrySwapAny()
+bool? TrySwapAny()
 {
     for (int i = Z00; anfs[i].Count > 0; i++)
     {
@@ -172,17 +172,18 @@ bool TrySwapAny()
 }
 
 // Recursively try swapping
-bool TrySwap(ANF anf, int i)
+bool? TrySwap(ANF anf, int i)
 {
     if (DoTrySwap(anf, i))
         return true;
     var (op, a, b) = gates[i];
-    return op == Op.XOR &&
-        (TrySwap(Add(anf, anfs[a]), b) ||
-        TrySwap(Add(anf, anfs[b]), a));
+    return op == Op.XOR
+        ? TrySwap(Add(anf, anfs[a]), b) == true ||
+          TrySwap(Add(anf, anfs[b]), a) == true
+        : null;
 }
 
-// Search an equivalent ANF; swap if found
+// Look for an equivalent ANF; swap if found
 bool DoTrySwap(ANF anf, int i)
 {
     if (!TryFind(anf, out var j))
@@ -193,7 +194,7 @@ bool DoTrySwap(ANF anf, int i)
     return true;
 }
 
-// Search an equivalent ANF
+// Look for an equivalent ANF
 bool TryFind(ANF anf, out int i)
 {
     for (i = Z00; i < gates.Length; i++)
