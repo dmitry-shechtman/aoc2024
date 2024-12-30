@@ -10,6 +10,7 @@ Regex regex = new(@"^((?<k>[xy]\d\d): (?<v>0|1)\n)+(\n(?<a>[a-w]{3}|[xy]\d\d) (?
 var input = File.ReadAllText("input.txt").Trim();
 var vals = regex.GetAllValues(input);
 
+var zCount = 0;
 var gates = BuildCircuit(out var keys, out var values);
 
 ANF[] anfs, exps;
@@ -19,7 +20,7 @@ Console.WriteLine(Part1());
 Console.WriteLine(Part2());
 
 long Part1() =>
-    Enumerable.Range(Z00, COUNT)
+    Enumerable.Range(Z00, zCount)
         .Aggregate(0L, (a, i) => a | GetValue(i) << i);
 
 string Part2()
@@ -53,12 +54,11 @@ Gate[] BuildCircuit(out string[] keys, out int[] values)
         foreach (var c in "xy")
             keys.Add($"{c}{i:d02}");
 
-    for (int i = 0; i < COUNT; i++)
-        keys.Add($"z{i:d02}");
-
     foreach (var key in vals["c"])
         if (key[0] != 'z')
             keys.Add(key);
+        else
+            keys.Insert(Z00 + zCount, $"z{zCount++:d02}");
 
     values = new int[0x8000];
     for (int i = 0; i < keys.Count; i++)
@@ -94,14 +94,14 @@ void BuildExpected()
 {
     exps = new ANF[COUNT];
 
-    for (var (i, m) = (Z00, UInt128.One); gates[i] != default; i++, m <<= 2)
+    for (var (i, m) = (0, UInt128.One); i < zCount; i++, m <<= 2)
     {
         ANF exp = new() { m, m << 1 }; // x_i XOR y_i
-        if (gates[i + 1] == default) // Last bit
+        if (i == zCount - 1) // Last bit
             exp.Clear(); // No x_i XOR y_i
-        if (i > Z00) // Skip bit 0
+        if (i > 0) // Skip bit 0
             exp.Add(m >> 1 | m >> 2); // Carry
-        exps[i - Z00] = exp;
+        exps[i] = exp;
     }
 }
 
@@ -116,7 +116,7 @@ void BuildActual()
 
     // Add gates to the array
     for (int i = Z00; i < gates.Length; i++)
-        anfs[i] = gates[i] == default ? new() : GetANF(i);
+        anfs[i] = GetANF(i);
 }
 
 // Retrieve an ANF or create one if not found
@@ -162,11 +162,11 @@ ANF Add(ANF anf1, ANF anf2)
 // Look for an invalid output; try swapping if found
 bool? TrySwapAny()
 {
-    for (int i = Z00; anfs[i].Count > 0; i++)
+    for (int i = 0; i < zCount; i++)
     {
-        var exp = exps[i - Z00];
-        if (!exp.SequenceEqual(anfs[i]))
-            return TrySwap(exp, i);
+        var exp = exps[i];
+        if (!exp.SequenceEqual(anfs[i + Z00]))
+            return TrySwap(exp, i + Z00);
     }
     return false;
 }
