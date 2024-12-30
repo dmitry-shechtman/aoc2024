@@ -1,8 +1,8 @@
 ﻿using System.Text.RegularExpressions;
 
-using ANF = System.Collections.Generic.SortedSet<System.UInt128>;
+using ANF = System.Collections.Generic.SortedSet<decimal>;
 
-const int COUNT = 64;
+const int COUNT = 48;
 const int Z00 = COUNT * 2;
 
 Regex regex = new(@"^((?<k>[xy]\d\d): (?<v>0|1)\n)+(\n(?<a>[a-w]{3}|[xy]\d\d) (?<op>AND|OR|XOR) (?<b>[a-w]{3}|[xy]\d\d) -> (?<c>(z\d\d|[a-w]{3})))+$");
@@ -20,8 +20,8 @@ Console.WriteLine(Part1());
 Console.WriteLine(Part2());
 
 long Part1() =>
-    Enumerable.Range(Z00, zCount)
-        .Aggregate(0L, (a, i) => a | GetValue(i) << i);
+    Enumerable.Range(Z00, zCount).Reverse()
+        .Aggregate(0L, (a, i) => a << 1 | GetValue(i));
 
 string Part2()
 {
@@ -93,14 +93,24 @@ Op ParseOp(string op) => op switch
 void BuildExpected()
 {
     exps = new ANF[COUNT];
+    Span<int> bits = stackalloc int[4];
 
-    for (var (i, m) = (0, UInt128.One); i < zCount; i++, m <<= 2)
+    for (var i = 0; i < zCount; i++)
     {
-        ANF exp = new() { m, m << 1 }; // x_i XOR y_i
-        if (i == zCount - 1) // Last bit
-            exp.Clear(); // No x_i XOR y_i
+        ANF exp = new();
         if (i > 0) // Skip bit 0
-            exp.Add(m >> 1 | m >> 2); // Carry
+        {
+            bits[(i - 1) >> 4] = 1 << ((i - 1) << 1) | 1 << ((i << 1) - 1);
+            exp.Add(new(bits)); // Carry
+            bits[(i - 1) >> 4] = 0;
+        }
+        if (i < zCount - 1) // Last bit
+        {
+            bits[i >> 4] = 1 << (i << 1);
+            exp.Add(new(bits)); // x_i
+            bits[i >> 4] = 1 << ((i << 1) + 1);
+            exp.Add(new(bits)); // y_i
+        }
         exps[i] = exp;
     }
 }
@@ -109,10 +119,15 @@ void BuildExpected()
 void BuildActual()
 {
     anfs = new ANF[gates.Length];
+    Span<int> bits = stackalloc int[4];
 
     // Initialize input variables
-    for (var (i, m) = (0, UInt128.One); i < Z00; i++, m <<= 1)
-        anfs[i] = new() { m }; // x_i maps to 2^2i
+    for (var i = 0; i < Z00; i++)
+    {
+        bits[i >> 5] = 1 << i;
+        anfs[i] = new() { new(bits) }; // x_i maps to 2^2i
+        bits[i >> 5] = 0;
+    }
 
     // Add gates to the array
     for (int i = Z00; i < gates.Length; i++)
@@ -142,10 +157,22 @@ ANF DoGetANF(int i)
 ANF Multiply(ANF anf1, ANF anf2)
 {
     ANF result = new();
+    Span<int> bits1 = stackalloc int[4];
+    Span<int> bits2 = stackalloc int[4];
     foreach (var term1 in anf1)
+    {
+        decimal.GetBits(term1, bits1);
         foreach (var term2 in anf2)
-            if (!result.Remove(term1 ^ term2))
-                result.Add(term1 ^ term2);
+        {
+            decimal.GetBits(term2, bits2);
+            (bits2[0], bits2[1], bits2[2]) =
+               (bits2[0] ^ bits1[0],
+                bits2[1] ^ bits1[1],
+                bits2[2] ^ bits1[2]);
+            if (!result.Remove(new(bits2)))
+                result.Add(new(bits2));
+        }
+    }
     return result;
 }
 
