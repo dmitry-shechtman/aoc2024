@@ -92,18 +92,16 @@ Op ParseOp(string op) => op switch
 // Build ANFs for adder outputs 
 void BuildExpected()
 {
-    exps = new ANF[COUNT];
+    exps = new ANF[zCount];
 
-    for (var (i, m) = (0, 1L); i < zCount; i++, m <<= 1)
+    for (var (i, cin, m) = (0, new ANF(), 1L); i < zCount; i++, cin.Add(new(m, m)), m <<= 1)
     {
-        ANF exp = new();
-        if (i < zCount - 1) // Skip last bit
+        ANF exp = new(cin);      // Carry in
+        if (i < zCount - 1)      // Skip last bit
         {
             exp.Add(new(m, 0L)); // x_i maps to 2^i
             exp.Add(new(0L, m)); // y_i maps to 2^i+64
         }
-        if (i > 0) // Skip bit 0
-            exp.Add(new(m >> 1, m >> 1)); // Carry
         exps[i] = exp;
     }
 }
