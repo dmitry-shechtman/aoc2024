@@ -1,6 +1,5 @@
-﻿using System.Text.RegularExpressions;
-
-using ANF = System.Collections.Generic.SortedSet<System.UInt128>;
+﻿using aoc;
+using System.Text.RegularExpressions;
 
 const int COUNT = 64;
 const int Z00 = COUNT * 2;
@@ -10,199 +9,186 @@ Regex regex = new(@"^((?<k>[xy]\d\d): (?<v>0|1)\n)+(\n(?<a>[a-w]{3}|[xy]\d\d) (?
 var input = File.ReadAllText("input.txt").Trim();
 var vals = regex.GetAllValues(input);
 
-var zCount = 0;
-var gates = BuildCircuit(out var keys, out var values);
+var tuples = vals["c"]
+    .Select((c, i) => (c, v: new Tuple(Enum.Parse<Op>(vals["op"][i]), vals["a"][i], vals["b"][i])))
+    .ToDictionary(t => t.c, t => t.v);
 
-ANF[] anfs, exps;
-SortedSet<string> swap = new();
+var zCount = vals["c"].Count(k => k[0] == 'z');
+
+Dictionary<string, Node> nodes;
+Dictionary<Node, string> index;
+var inputs = BuildInputs();
+var acts = BuildActual();
 
 Console.WriteLine(Part1());
 Console.WriteLine(Part2());
 
-long Part1() =>
-    Enumerable.Range(Z00, zCount)
-        .Aggregate(0L, (a, i) => a | GetValue(i) << i);
+long Part1()
+{
+    var data = BuildData();
+    return acts.Aggregate(0L, (a, v, i) => a | v.GetValue(data) << i);
+}
 
 string Part2()
 {
-    BuildExpected();
-    do
-        BuildActual();
-    while (TrySwapAny() == true);
+    var exps = BuildExpected();
+    SortedSet<string> swap = new();
+    while (TrySwapAny(exps, acts, swap))
+        acts = BuildActual();
     return string.Join(',', swap);
 }
 
-Gate[] BuildCircuit(out string[] keys, out int[] values)
+Input[] BuildInputs()
 {
-    (keys, values) = BuildIndex();
+    var inputs = new Input[Z00];
+    for (int i = 0; i < inputs.Length; i++)
+        inputs[i] = new(i);
+    return inputs;
+}
 
-    var gates = new Gate[keys.Length];
-
-    for (int i = 0; i < vals["c"].Length; i++)
-        gates[Get("c", i)] = new(ParseOp(vals["op"][i]), Get("a", i), Get("b", i));
-
+UInt128 BuildData()
+{
+    UInt128 data = 0;
     for (int i = 0; i < vals["k"].Length; i++)
-        gates[Get("k", i)] = new((Op)(vals["v"][i][0] - '0'), 0, 0);
-
-    return gates;
-}
-
-(string[] keys, int[] values) BuildIndex()
-{
-    List<string> keys = new();
-    for (int i = 0; i < COUNT; i++)
-        foreach (var c in "xy")
-            keys.Add($"{c}{i:d02}");
-
-    foreach (var key in vals["c"])
-        if (key[0] != 'z')
-            keys.Add(key);
-        else
-            keys.Insert(Z00 + zCount, $"z{zCount++:d02}");
-
-    values = new int[0x8000];
-    for (int i = 0; i < keys.Count; i++)
-        values[GetIndex(keys[i])] = i;
-
-    return (keys.ToArray(), values);
-}
-
-int Get(string key, int i) =>
-    values[GetIndex(vals[key][i])];
-
-int GetIndex(string key) =>
-    (key[0] & 0x1F) << 10 | (key[1] & 0x1F) << 5 | key[2] & 0x1F;
-
-long GetValue(int index) => gates[index] switch
-{
-    (Op.AND, var a, var b) => GetValue(a) & GetValue(b),
-    (Op.OR,  var a, var b) => GetValue(a) | GetValue(b),
-    (Op.XOR, var a, var b) => GetValue(a) ^ GetValue(b),
-    (var op, _, _) => (long)op
-};
-
-Op ParseOp(string op) => op switch
-{
-    "AND" => Op.AND,
-    "OR"  => Op.OR,
-    "XOR" => Op.XOR,
-    _ => throw new NotImplementedException()
-};
-
-// Build ANFs for adder outputs 
-void BuildExpected()
-{
-    exps = new ANF[COUNT];
-
-    for (var (i, m) = (0, UInt128.One); i < zCount; i++, m <<= 2)
     {
-        ANF exp = new() { m, m << 1 }; // x_i XOR y_i
-        if (i == zCount - 1) // Last bit
-            exp.Clear(); // No x_i XOR y_i
-        if (i > 0) // Skip bit 0
-            exp.Add(m >> 1 | m >> 2); // Carry
-        exps[i] = exp;
+        var key = vals["k"][i];
+        var value = UInt128.Parse(vals["v"][i]);
+        var index = int.Parse(key[1..]) | (key[0] & 0x03) << 6;
+        data |= value << index;
     }
+    return data;
 }
 
-// Build ANFs for actual circuit
-void BuildActual()
+// Build adder circuit
+Node[] BuildExpected()
 {
-    anfs = new ANF[gates.Length];
-
-    // Initialize input variables
-    for (var (i, m) = (0, UInt128.One); i < Z00; i++, m <<= 1)
-        anfs[i] = new() { m }; // x_i maps to 2^2i
-
-    // Add gates to the array
-    for (int i = Z00; i < gates.Length; i++)
-        anfs[i] = GetANF(i);
-}
-
-// Retrieve an ANF or create one if not found
-ANF GetANF(int i) =>
-    anfs[i] ?? (anfs[i] = DoGetANF(i));
-
-// Recursively build an ANF
-ANF DoGetANF(int i)
-{
-    var (Op, A, B) = gates[i];
-    var a = GetANF(A);
-    var b = GetANF(B);
-    return Op switch
+    var exps = new Node[zCount];
+    Node? x, y, carry = null;
+    for (int i = 0; i < zCount - 1; i++)
     {
-        Op.AND => Multiply(a, b),
-        Op.OR  => Add(Add(a, b), Multiply(a, b)),
-        Op.XOR => Add(a, b),
-        _ => throw new NotImplementedException(),
-    };
+        (x, y) = (inputs[i], inputs[i + COUNT]);
+        exps[i] = (x ^ y ^ carry)!;
+        carry = x & y | (carry & (x ^ y));
+    }
+    exps[^1] = carry!;
+    return exps;
 }
 
-// Multiply two ANFs (AND operation)
-ANF Multiply(ANF anf1, ANF anf2)
+// Build actual circuit
+Gate[] BuildActual()
 {
-    ANF result = new();
-    foreach (var term1 in anf1)
-        foreach (var term2 in anf2)
-            if (!result.Remove(term1 ^ term2))
-                result.Add(term1 ^ term2);
-    return result;
-}
-
-// Add two ANFs (XOR operation)
-ANF Add(ANF anf1, ANF anf2)
-{
-    ANF result = new(anf1);
-    foreach (var term in anf2)
-        if (!result.Remove(term))
-            result.Add(term);
-    return result;
-}
-
-// Look for an invalid output; try swapping if found
-bool? TrySwapAny()
-{
+    nodes = new();
+    index = new();
+    var acts = new Gate[zCount];
     for (int i = 0; i < zCount; i++)
     {
-        var exp = exps[i];
-        if (!exp.SequenceEqual(anfs[i + Z00]))
-            return TrySwap(exp, i + Z00);
+        nodes.Add($"x{i:d02}", inputs[i]);
+        nodes.Add($"y{i:d02}", inputs[i + COUNT]);
+        acts[i] = CreateGate($"z{i:d02}", tuples);
     }
+    return acts;
+}
+
+Node GetNode(string key)
+{
+    if (!nodes.TryGetValue(key, out var value))
+        value = CreateGate(key, tuples);
+    return value;
+}
+
+Gate CreateGate(string key, Dictionary<string, Tuple> tuples)
+{
+    var value = DoCreateGate(tuples[key]);
+    nodes.Add(key, value);
+    index.Add(value, key);
+    return value;
+}
+
+Gate DoCreateGate(Tuple t) =>
+    Gate.Create(t.Op, GetNode(t.A), GetNode(t.B));
+
+// Look for an invalid output; try swapping if found
+bool TrySwapAny(Node[] exps, Node[] acts, SortedSet<string> swap)
+{
+    for (int i = 0; i < zCount; i++)
+        if (!exps[i].Equals(acts[i]))
+            return TrySwap(exps[i], acts[i], swap);
     return false;
 }
 
 // Recursively try swapping
-bool? TrySwap(ANF anf, int i)
+bool TrySwap(Node exp, Node act, SortedSet<string> swap)
 {
-    if (DoTrySwap(anf, i))
+    if (DoTrySwap(exp, act, swap))
         return true;
-    var (op, a, b) = gates[i];
-    return op == Op.XOR
-        ? TrySwap(Add(anf, anfs[a]), b) == true ||
-          TrySwap(Add(anf, anfs[b]), a) == true
-        : null;
+    if (!(exp is Gate gExp && act is Gate gAct && gExp.Op == gAct.Op))
+        throw new();
+    return gExp.A.Equals(gAct.A) && TrySwap(gExp.B, gAct.B, swap)
+        || gExp.B.Equals(gAct.B) && TrySwap(gExp.A, gAct.A, swap);
 }
 
-// Look for an equivalent ANF; swap if found
-bool DoTrySwap(ANF anf, int i)
+// Look for an equivalent gate; swap if found
+bool DoTrySwap(Node exp, Node act, SortedSet<string> swap)
 {
-    if (!TryFind(anf, out var j))
+    if (!index.TryGetValue(exp, out var i) || !index.TryGetValue(act, out var j))
         return false;
-    (gates[i], gates[j]) = (gates[j], gates[i]);
-    swap.Add(keys[i]);
-    swap.Add(keys[j]);
+    (tuples[i], tuples[j]) = (tuples[j], tuples[i]);
+    swap.Add(i);
+    swap.Add(j);
     return true;
 }
 
-// Look for an equivalent ANF
-bool TryFind(ANF anf, out int i)
+// Circuit node
+abstract record Node
 {
-    for (i = Z00; i < gates.Length; i++)
-        if (anf.SequenceEqual(anfs[i]))
-            return true;
-    return false;
+    public abstract long GetValue(UInt128 data);
+
+    public static Node? operator &(Node? left, Node? right) =>
+        Create(Op.AND, left, right);
+
+    public static Node? operator |(Node? left, Node? right) =>
+        Create(Op.OR, left, right);
+
+    public static Node? operator ^(Node? left, Node? right) =>
+        Create(Op.XOR, left, right);
+
+    private static Node? Create(Op op, Node? left, Node? right) =>
+        left is null
+            ? null
+            : right is null
+                ? left
+                : Gate.Create(op, left, right);
 }
 
-enum Op { NIL, ONE, AND, OR, XOR }
+// Circuit input
+sealed record Input(int Index) : Node
+{
+    public override long GetValue(UInt128 data) =>
+        (long)((data & UInt128.One << Index) >> Index);
+}
 
-record struct Gate(Op Op, int A, int B);
+// Circuit gate
+sealed record Gate(Op Op, Node A, Node B) : Node
+{
+    public static Gate Create(Op op, Node left, Node right)
+    {
+        var (a, b) = left.GetHashCode() < right.GetHashCode()
+            ? (left, right)
+            : (right, left);
+        return new(op, a, b);
+    }
+
+    public override long GetValue(UInt128 data) => Op switch
+    {
+        Op.AND => A.GetValue(data) & B.GetValue(data),
+        Op.OR  => A.GetValue(data) | B.GetValue(data),
+        Op.XOR => A.GetValue(data) ^ B.GetValue(data),
+        _ => throw new NotImplementedException(),
+    };
+}
+
+// Gate tuple
+record struct Tuple(Op Op, string A, string B);
+
+// Operator
+enum Op { AND, OR, XOR }
