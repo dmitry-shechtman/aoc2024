@@ -46,15 +46,15 @@ Input[] BuildInputs()
     return inputs;
 }
 
-UInt128 BuildData()
+long[] BuildData()
 {
-    UInt128 data = 0;
+    var data = new long[2];
     for (int i = 0; i < vals["k"].Length; i++)
     {
         var key = vals["k"][i];
-        var value = UInt128.Parse(vals["v"][i]);
-        var index = int.Parse(key[1..]) | (key[0] & 0x03) << 6;
-        data |= value << index;
+        var value = long.Parse(vals["v"][i]);
+        var index = int.Parse(key[1..]);
+        data[key[0] & 0x03] |= value << index;
     }
     return data;
 }
@@ -141,7 +141,7 @@ bool DoTrySwap(Node exp, Node act, SortedSet<string> swap)
 // Circuit node
 abstract record Node
 {
-    public abstract long GetValue(UInt128 data);
+    public abstract long GetValue(long[] data);
 
     public static Node? operator &(Node? left, Node? right) =>
         Create(Op.AND, left, right);
@@ -163,8 +163,8 @@ abstract record Node
 // Circuit input
 sealed record Input(int Index) : Node
 {
-    public override long GetValue(UInt128 data) =>
-        (long)((data & UInt128.One << Index) >> Index);
+    public override long GetValue(long[] data) =>
+        (data[Index >> 6] & 1L << Index) >> Index;
 }
 
 // Circuit gate
@@ -178,7 +178,7 @@ sealed record Gate(Op Op, Node A, Node B) : Node
         return new(op, a, b);
     }
 
-    public override long GetValue(UInt128 data) => Op switch
+    public override long GetValue(long[] data) => Op switch
     {
         Op.AND => A.GetValue(data) & B.GetValue(data),
         Op.OR  => A.GetValue(data) | B.GetValue(data),
