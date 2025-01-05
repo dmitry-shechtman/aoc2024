@@ -6,14 +6,12 @@ Regex regex = new(@"^((?<k>[xy]\d\d): (?<v>0|1)\n)+(\n(?<a>[a-w]{3}|[xy]\d\d) (?
 var input = File.ReadAllText("input.txt").Trim();
 var vals = regex.GetAllValues(input);
 
-var tuples = vals["c"]
-    .Select((c, i) => (c, v: new Tuple(Enum.Parse<Op>(vals["op"][i]), vals["a"][i], vals["b"][i])))
-    .ToDictionary(t => t.c, t => t.v);
-
-Dictionary<string, Node> nodes;
-Dictionary<Node, string> index;
-var cnts = BuildCounts();
-var acts = BuildActual();
+var cnts = new int[3];
+var kCount = BuildCount("k");
+var cCount = BuildCount("c");
+var nodes  = BuildNodes(out var index);
+var tuples = BuildTuples(out var keys, out var outputs);
+var acts   = BuildActual();
 
 Console.WriteLine(Part1());
 Console.WriteLine(Part2());
@@ -33,14 +31,44 @@ string Part2()
     return string.Join(',', swap);
 }
 
-int[] BuildCounts()
+int BuildCount(string k)
 {
-    var cnts = new int[3];
-    foreach (var k in "abc")
-        foreach (var key in vals[$"{k}"])
-            if (int.TryParse(key[1..], out var v))
-                cnts[key[0] & 0x03] = Math.Max(cnts[key[0] & 0x03], v + 1);
-    return cnts;
+    foreach (var key in vals[k])
+        if ((key[0] & 0x1C) == 0x18)
+            ++cnts[key[0] & 0x03];
+    return vals[k].Length;
+}
+
+Node[] BuildNodes(out Dictionary<Node, int> index)
+{
+    var nodes = new Node[kCount + cCount];
+    for (int i = 0; i < kCount; i++)
+        nodes[i] = new Input(i);
+    index = new(cCount);
+    return nodes;
+}
+
+Tuple[] BuildTuples(out string[] keys, out int[] outputs)
+{
+    keys = new string[kCount + cCount];
+    Dictionary<string, int> values = new(kCount + cCount);
+    foreach (var k in "xy")
+        for (int i = 0; i < cnts[k & 0x03]; i++)
+            values.Add($"{k}{i:d02}", i << 1 | k & 0x01);
+
+    for (int i = 0; i < cCount; i++)
+        values.Add(keys[i + kCount] = vals["c"][i], i + kCount);
+
+    var tuples = new Tuple[kCount + cCount];
+    outputs = new int[cnts[^1]];
+    for (int i = 0; i < cCount; i++)
+    {
+        tuples[i + kCount] = new(ParseOp(vals["op"][i]), values[vals["a"][i]], values[vals["b"][i]]);
+        if (keys[i + kCount][0] == 'z')
+            outputs[ParseKey(keys[i + kCount])] = i + kCount;
+    }
+
+    return tuples;
 }
 
 UInt128 BuildData()
@@ -50,20 +78,31 @@ UInt128 BuildData()
     {
         var key = vals["k"][i];
         var value = UInt128.Parse(vals["v"][i]);
-        var index = int.Parse(key[1..]) << 1 | key[0] & 0x01;
+        var index = ParseKey(key) << 1 | key[0] & 0x01;
         data |= value << index;
     }
     return data;
 }
 
+Op ParseOp(string op) => op switch
+{
+    "AND" => Op.AND,
+    "OR"  => Op.OR,
+    "XOR" => Op.XOR,
+    _ => throw new NotImplementedException()
+};
+
+int ParseKey(string key) =>
+    (key[1] & 0x0F) * 10 + (key[2] & 0x0F);
+
 // Build adder circuit
 Node[] BuildExpected()
 {
     var exps = new Node[cnts[^1]];
-    Node carry = Node.Zero, xor;
+    Node carry = Node.Zero, x, y, xor;
     for (int i = 0; i < exps.Length; i++)
     {
-        Input x = new(i << 1), y = new(i << 1 | 1);
+        (x, y) = (nodes[i << 1], nodes[i << 1 | 1]);
         xor = i < exps.Length - 1 ? x ^ y : Node.Zero;
         exps[i] = xor ^ carry;
         carry = x & y | xor & carry;
@@ -72,35 +111,22 @@ Node[] BuildExpected()
 }
 
 // Build actual circuit
-Gate[] BuildActual()
+Node[] BuildActual()
 {
-    nodes = new();
-    index = new();
-    for (int k = 0; k < 2; k++)
-        for (int i = 0; i < cnts[k]; i++)
-            nodes.Add($"{"xy"[k]}{i:d02}", new Input(i << 1 | k));
-    var acts = new Gate[cnts[^1]];
+    nodes.Clear(kCount, cCount);
+    index.Clear();
+    var acts = new Node[cnts[^1]];
     for (int i = 0; i < acts.Length; i++)
-        acts[i] = CreateGate($"z{i:d02}", tuples);
+        acts[i] = GetNode(outputs[i]);
+    for (int i = kCount; i < nodes.Length; i++)
+        index.Add(nodes[i], i);
     return acts;
 }
 
-Node GetNode(string key)
-{
-    if (!nodes.TryGetValue(key, out var value))
-        value = CreateGate(key, tuples);
-    return value;
-}
+Node GetNode(int i) =>
+    nodes[i] ??= CreateGate(tuples[i]);
 
-Gate CreateGate(string key, Dictionary<string, Tuple> tuples)
-{
-    var value = DoCreateGate(tuples[key]);
-    nodes.Add(key, value);
-    index.Add(value, key);
-    return value;
-}
-
-Gate DoCreateGate(Tuple t) =>
+Gate CreateGate(Tuple t) =>
     Gate.Create(t.Op, GetNode(t.A), GetNode(t.B));
 
 // Look for an invalid output; try swapping if found
@@ -126,11 +152,12 @@ bool TrySwap(Node exp, Node act, SortedSet<string> swap)
 // Look for an equivalent gate; swap if found
 bool DoTrySwap(Node exp, Node act, SortedSet<string> swap)
 {
-    if (!index.TryGetValue(exp, out var i) || !index.TryGetValue(act, out var j))
+    if (!index.TryGetValue(exp, out var i))
         return false;
+    var j = index[act];
     (tuples[i], tuples[j]) = (tuples[j], tuples[i]);
-    swap.Add(i);
-    swap.Add(j);
+    swap.Add(keys[i]);
+    swap.Add(keys[j]);
     return true;
 }
 
@@ -138,6 +165,8 @@ bool DoTrySwap(Node exp, Node act, SortedSet<string> swap)
 record Node
 {
     public static Node Zero { get; } = new();
+
+    public override int GetHashCode() => -1;
 
     public virtual long GetValue(UInt128 data) => 0;
 
@@ -163,6 +192,8 @@ record Node
 // Circuit input
 sealed record Input(int Index) : Node
 {
+    public override int GetHashCode() => Index;
+
     public override long GetValue(UInt128 data) =>
         (long)((data & UInt128.One << Index) >> Index);
 }
@@ -172,11 +203,19 @@ sealed record Gate(Op Op, Node A, Node B) : Node
 {
     public static Gate Create(Op op, Node left, Node right)
     {
-        var (a, b) = left.GetHashCode() < right.GetHashCode()
-            ? (left, right)
-            : (right, left);
-        return new(op, a, b);
+        var (i, j) = (left.GetHashCode(), right.GetHashCode());
+        var (a, b, h) = i < j
+            ? (left, right, j)
+            : (right, left, i);
+        return new(op, a, b)
+        {
+            HashCode = (h + 0x100) | (int)op << 24
+        };
     }
+
+    public override int GetHashCode() => HashCode;
+
+    private int HashCode { get; init; }
 
     public override long GetValue(UInt128 data) => Op switch
     {
@@ -188,7 +227,7 @@ sealed record Gate(Op Op, Node A, Node B) : Node
 }
 
 // Gate tuple
-record struct Tuple(Op Op, string A, string B);
+record struct Tuple(Op Op, int A, int B);
 
 // Operator
 enum Op { AND, OR, XOR }
