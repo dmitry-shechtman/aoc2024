@@ -62,14 +62,14 @@ BigInteger BuildData()
 Node[] BuildExpected()
 {
     var exps = new Node[cnts[^1]];
-    Node? carry = null;
-    for (int i = 0; i < exps.Length - 1; i++)
+    Node carry = Node.Zero, xor;
+    for (int i = 0; i < exps.Length; i++)
     {
         Input x = new(i << 1), y = new(i << 1 | 1);
-        exps[i] = (x ^ y ^ carry)!;
-        carry = x & y | (carry & (x ^ y));
+        xor = i < exps.Length - 1 ? x ^ y : Node.Zero;
+        exps[i] = xor ^ carry;
+        carry = x & y | xor & carry;
     }
-    exps[^1] = carry!;
     return exps;
 }
 
@@ -137,25 +137,29 @@ bool DoTrySwap(Node exp, Node act, SortedSet<string> swap)
 }
 
 // Circuit node
-abstract record Node
+record Node
 {
-    public abstract BigInteger GetValue(BigInteger data);
+    public static Node Zero { get; } = new();
 
-    public static Node? operator &(Node? left, Node? right) =>
-        Create(Op.AND, left, right);
+    public virtual BigInteger GetValue(BigInteger data) => 0;
 
-    public static Node? operator |(Node? left, Node? right) =>
+    public static Node operator &(Node left, Node right) =>
+        !ReferenceEquals(Zero, left) && !ReferenceEquals(Zero, right)
+            ? Gate.Create(Op.AND, left, right)
+            : Zero;
+
+    public static Node operator |(Node left, Node right) =>
         Create(Op.OR, left, right);
 
-    public static Node? operator ^(Node? left, Node? right) =>
+    public static Node operator ^(Node left, Node right) =>
         Create(Op.XOR, left, right);
 
-    private static Node? Create(Op op, Node? left, Node? right) =>
-        left is null
-            ? null
-            : right is null
-                ? left
-                : Gate.Create(op, left, right);
+    private static Node Create(Op op, Node left, Node right) =>
+        !ReferenceEquals(Zero, left)
+            ? !ReferenceEquals(Zero, right)
+                ? Gate.Create(op, left, right)
+                : left
+            : right;
 }
 
 // Circuit input
