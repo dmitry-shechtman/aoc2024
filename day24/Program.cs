@@ -1,8 +1,7 @@
 ﻿using aoc;
 using System.Text.RegularExpressions;
 
-const int COUNT = 64;
-const int Z00 = COUNT * 2;
+const int SHIFT = 6;
 
 Regex regex = new(@"^((?<k>[xy]\d\d): (?<v>0|1)\n)+(\n(?<a>[a-w]{3}|[xy]\d\d) (?<op>AND|OR|XOR) (?<b>[a-w]{3}|[xy]\d\d) -> (?<c>(z\d\d|[a-w]{3})))+$");
 
@@ -13,11 +12,9 @@ var tuples = vals["c"]
     .Select((c, i) => (c, v: new Tuple(Enum.Parse<Op>(vals["op"][i]), vals["a"][i], vals["b"][i])))
     .ToDictionary(t => t.c, t => t.v);
 
-var zCount = vals["c"].Count(k => k[0] == 'z');
-
 Dictionary<string, Node> nodes;
 Dictionary<Node, string> index;
-var inputs = BuildInputs();
+var cnts = BuildCounts();
 var acts = BuildActual();
 
 Console.WriteLine(Part1());
@@ -38,23 +35,25 @@ string Part2()
     return string.Join(',', swap);
 }
 
-Input[] BuildInputs()
+int[] BuildCounts()
 {
-    var inputs = new Input[Z00];
-    for (int i = 0; i < inputs.Length; i++)
-        inputs[i] = new(i);
-    return inputs;
+    var cnts = new int[3];
+    foreach (var k in "abc")
+        foreach (var key in vals[$"{k}"])
+            if (int.TryParse(key[1..], out var v))
+                cnts[key[0] & 0x03] = Math.Max(cnts[key[0] & 0x03], v + 1);
+    return cnts;
 }
 
 long[] BuildData()
 {
-    var data = new long[2];
+    var data = new long[(vals["k"].Length + ((1 << SHIFT) - 1)) >> SHIFT];
     for (int i = 0; i < vals["k"].Length; i++)
     {
         var key = vals["k"][i];
         var value = long.Parse(vals["v"][i]);
-        var index = int.Parse(key[1..]);
-        data[key[0] & 0x03] |= value << index;
+        var index = int.Parse(key[1..]) << 1 | key[0] & 0x01;
+        data[index >> SHIFT] |= value << index;
     }
     return data;
 }
@@ -62,11 +61,11 @@ long[] BuildData()
 // Build adder circuit
 Node[] BuildExpected()
 {
-    var exps = new Node[zCount];
-    Node? x, y, carry = null;
-    for (int i = 0; i < zCount - 1; i++)
+    var exps = new Node[cnts[^1]];
+    Node? carry = null;
+    for (int i = 0; i < exps.Length - 1; i++)
     {
-        (x, y) = (inputs[i], inputs[i + COUNT]);
+        Input x = new(i << 1), y = new(i << 1 | 1);
         exps[i] = (x ^ y ^ carry)!;
         carry = x & y | (carry & (x ^ y));
     }
@@ -79,13 +78,12 @@ Gate[] BuildActual()
 {
     nodes = new();
     index = new();
-    var acts = new Gate[zCount];
-    for (int i = 0; i < zCount; i++)
-    {
-        nodes.Add($"x{i:d02}", inputs[i]);
-        nodes.Add($"y{i:d02}", inputs[i + COUNT]);
+    for (int k = 0; k < 2; k++)
+        for (int i = 0; i < cnts[k]; i++)
+            nodes.Add($"{"xy"[k]}{i:d02}", new Input(i << 1 | k));
+    var acts = new Gate[cnts[^1]];
+    for (int i = 0; i < acts.Length; i++)
         acts[i] = CreateGate($"z{i:d02}", tuples);
-    }
     return acts;
 }
 
@@ -110,7 +108,7 @@ Gate DoCreateGate(Tuple t) =>
 // Look for an invalid output; try swapping if found
 bool TrySwapAny(Node[] exps, Node[] acts, SortedSet<string> swap)
 {
-    for (int i = 0; i < zCount; i++)
+    for (int i = 0; i < exps.Length; i++)
         if (!exps[i].Equals(acts[i]))
             return TrySwap(exps[i], acts[i], swap);
     return false;
