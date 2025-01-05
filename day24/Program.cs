@@ -1,7 +1,6 @@
 ﻿using aoc;
+using System.Numerics;
 using System.Text.RegularExpressions;
-
-const int SHIFT = 6;
 
 Regex regex = new(@"^((?<k>[xy]\d\d): (?<v>0|1)\n)+(\n(?<a>[a-w]{3}|[xy]\d\d) (?<op>AND|OR|XOR) (?<b>[a-w]{3}|[xy]\d\d) -> (?<c>(z\d\d|[a-w]{3})))+$");
 
@@ -20,10 +19,11 @@ var acts = BuildActual();
 Console.WriteLine(Part1());
 Console.WriteLine(Part2());
 
-long Part1()
+BigInteger Part1()
 {
     var data = BuildData();
-    return acts.Aggregate(0L, (a, v, i) => a | v.GetValue(data) << i);
+    return acts.Aggregate(BigInteger.Zero,
+        (a, v, i) => a | v.GetValue(data) << i);
 }
 
 string Part2()
@@ -45,15 +45,15 @@ int[] BuildCounts()
     return cnts;
 }
 
-long[] BuildData()
+BigInteger BuildData()
 {
-    var data = new long[(vals["k"].Length + ((1 << SHIFT) - 1)) >> SHIFT];
+    BigInteger data = 0;
     for (int i = 0; i < vals["k"].Length; i++)
     {
         var key = vals["k"][i];
-        var value = long.Parse(vals["v"][i]);
+        var value = BigInteger.Parse(vals["v"][i]);
         var index = int.Parse(key[1..]) << 1 | key[0] & 0x01;
-        data[index >> SHIFT] |= value << index;
+        data |= value << index;
     }
     return data;
 }
@@ -139,7 +139,7 @@ bool DoTrySwap(Node exp, Node act, SortedSet<string> swap)
 // Circuit node
 abstract record Node
 {
-    public abstract long GetValue(long[] data);
+    public abstract BigInteger GetValue(BigInteger data);
 
     public static Node? operator &(Node? left, Node? right) =>
         Create(Op.AND, left, right);
@@ -161,8 +161,8 @@ abstract record Node
 // Circuit input
 sealed record Input(int Index) : Node
 {
-    public override long GetValue(long[] data) =>
-        (data[Index >> 6] & 1L << Index) >> Index;
+    public override BigInteger GetValue(BigInteger data) =>
+        (data & BigInteger.One << Index) >> Index;
 }
 
 // Circuit gate
@@ -176,7 +176,7 @@ sealed record Gate(Op Op, Node A, Node B) : Node
         return new(op, a, b);
     }
 
-    public override long GetValue(long[] data) => Op switch
+    public override BigInteger GetValue(BigInteger data) => Op switch
     {
         Op.AND => A.GetValue(data) & B.GetValue(data),
         Op.OR  => A.GetValue(data) | B.GetValue(data),
