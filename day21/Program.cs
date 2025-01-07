@@ -1,5 +1,4 @@
 ﻿using aoc;
-using System.Collections.Concurrent;
 
 const int MAGIC = 256;
 const string KEYS = "^>v<A0123456789";
@@ -9,8 +8,7 @@ var input = File.ReadAllText("input.txt").Trim()
 
 string[,][] paths = new string[MAGIC, MAGIC][];
 
-ConcurrentDictionary<int, long>[,] mins =
-    new ConcurrentDictionary<int, long>[MAGIC, MAGIC];
+var mins = new Dictionary<int, long>[MAGIC, MAGIC];
 
 PriorityQueue<Vector, string> queue = new();
 Init();
@@ -54,9 +52,9 @@ void Set(int start, params Vector[] pad)
 {
     for (int i = 0, a = i + start; i < pad.Length - 1; ++i, ++a)
         for (int j = 0, b = j + start; j < pad.Length - 1; ++j, ++b)
-            mins[KEYS[a], KEYS[b]] = new(new[] {
-                KeyValuePair.Create(0, (long)(paths[KEYS[a], KEYS[b]] =
-                    GetPaths(pad[i], pad[j], pad[^1]).ToArray())[0].Length) });
+            mins[KEYS[a], KEYS[b]] = new() {
+                { 0, (paths[KEYS[a], KEYS[b]] =
+                    GetPaths(pad[i], pad[j], pad[^1]).ToArray())[0].Length }};
 }
 
 IEnumerable<string> GetPaths(Vector start, Vector end, Vector wall)

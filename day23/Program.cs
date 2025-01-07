@@ -1,8 +1,6 @@
-﻿using System.Collections.Concurrent;
+﻿var input = File.ReadAllLines("input.txt");
 
-var input = File.ReadAllLines("input.txt");
-
-ConcurrentDictionary<int, HashSet<int>> graph = new(1, 1024);
+Dictionary<int, HashSet<int>> graph = new(1024);
 
 BuildGraph();
 Console.WriteLine(Part1());
