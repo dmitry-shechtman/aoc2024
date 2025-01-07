@@ -29,8 +29,8 @@ Console.WriteLine(Part2());
 Console.WriteLine(GetString(pos));
 
 int Part1() => Solve(
-    Matrix.Identity,
-    Matrix.Identity,
+    Matrix.One,
+    Matrix.One,
     BOX, BOX);
 
 int Part2() => Solve(
