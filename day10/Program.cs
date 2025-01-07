@@ -1,5 +1,4 @@
-﻿using aoc;
-using aoc.Grids;
+﻿using aoc.Grids;
 
 var s = File.ReadAllText("input.txt").Trim();
 var m = MultiGrid.Parse(s);

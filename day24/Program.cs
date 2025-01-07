@@ -1,5 +1,4 @@
-﻿using aoc;
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 
 Regex regex = new(@"^((?<k>[xy]\d\d): (?<v>0|1)\n)+(\n(?<a>[a-w]{3}|[xy]\d\d) (?<op>AND|OR|XOR) (?<b>[a-w]{3}|[xy]\d\d) -> (?<c>(z\d\d|[a-w]{3})))+$");
 

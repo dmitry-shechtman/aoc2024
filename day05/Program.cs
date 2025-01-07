@@ -1,6 +1,4 @@
-﻿using aoc;
-
-var input = File.ReadAllText("input.txt")
+﻿var input = File.ReadAllText("input.txt")
     .Trim().Split("\n\n");
 
 var rr = Split(input[0], '|')
