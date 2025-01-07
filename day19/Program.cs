@@ -13,8 +13,7 @@ int Part1() =>
 long Part2() =>
     patterns.Sum(s => counts[s]);
 
-long Count(string s) => counts.TryGetValue(s, out var count)
-    ? count
-    : counts[s] = (towels.Contains(s) ? 1 : 0) +
+long Count(string s) => counts.GetOrAdd(s,
+    s => (towels.Contains(s) ? 1 : 0) +
         Enumerable.Range(1, s.Length < 8 ? s.Length - 1 : 8)
-            .Sum(i => towels.Contains(s[..i]) ? Count(s[i..]) : 0);
+            .Sum(i => towels.Contains(s[..i]) ? Count(s[i..]) : 0));
