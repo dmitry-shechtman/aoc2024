@@ -1,5 +1,6 @@
 ﻿using aoc;
 using aoc.Grids;
+using System.Globalization;
 
 var (filename, index) = args.Length switch
 {
@@ -9,7 +10,7 @@ var (filename, index) = args.Length switch
 };
 
 var input = File.ReadAllText(filename);
-var points = Vector.ParseAll(input);
+var points = Vector.ParseAll(input, CultureInfo.InvariantCulture);
 
 VectorRange range = points.Range();
 Size size = new(range);

@@ -1,11 +1,12 @@
 ﻿using aoc;
+using System.Globalization;
 
 const int W = 101, H = 103, RUN = 10;
 Vector size = new(W, H);
 Vector half = size / 2;
 
 var input = File.ReadAllText("input.txt");
-var robots = Matrix.ParseRowsAll(input);
+var robots = Matrix.ParseRowsAll(input, CultureInfo.InvariantCulture);
 
 Console.WriteLine(Part1());
 Console.WriteLine(Part2());
