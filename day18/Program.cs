@@ -10,7 +10,7 @@ var (filename, index) = args.Length switch
 };
 
 var input = File.ReadAllText(filename);
-var points = Vector.ParseAll(input, CultureInfo.InvariantCulture);
+var points = Vector.Builder.ParseAll(input, CultureInfo.InvariantCulture);
 
 VectorRange range = points.Range();
 Size size = new(range);

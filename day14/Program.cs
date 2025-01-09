@@ -6,7 +6,7 @@ Vector size = new(W, H);
 Vector half = size / 2;
 
 var input = File.ReadAllText("input.txt");
-var robots = Matrix.ParseRowsAll(input, CultureInfo.InvariantCulture);
+var robots = Matrix.Rows.ParseAll(input, CultureInfo.InvariantCulture);
 
 Console.WriteLine(Part1());
 Console.WriteLine(Part2());
