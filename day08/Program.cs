@@ -10,9 +10,8 @@ int Solve(int start, int count) => m[..^1]
     .SelectMany(g => g
         .SelectMany(a => g
             .Where(b => a != b)
-            .Select(b => (b, v: b - a))
-            .SelectMany(t => Enumerable.Range(start, count)
-                .Select(i => t.b + t.v * i)
+            .SelectMany(b => Enumerable.Range(start, count)
+                .Select(i => b + (b - a) * i)
                 .TakeWhile(z.Contains))))
     .Distinct()
     .Count();
