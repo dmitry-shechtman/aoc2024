@@ -2,7 +2,7 @@
 using aoc.Grids;
 
 var s = File.ReadAllText("input.txt").Trim();
-var m = MultiGrid.Parse(s, "SMXA");
+var m = MultiGrid.Builder.Parse(s, "SMXA");
 
 Console.WriteLine(Solve(MooreGrid.Headings
     .Select(h =>
