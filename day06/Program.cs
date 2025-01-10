@@ -3,7 +3,7 @@ using static aoc.Grids.Grid;
 
 var s = File.ReadAllText("input.txt").AsSpan().Trim();
 var p = new Vector[4];
-var g = Parse(s, "^>v<", p, out var z);
+var g = Builder.Parse(s, "^>v<", p, out var z);
 var h = p.FindIndex(r => r != default);
 var o = p[h];
 

@@ -5,7 +5,7 @@ const int Penalty = 1000;
 
 var input = File.ReadAllText("input.txt").AsSpan().Trim();
 var points = new Vector[2];
-var walls = Grid.Parse(input, "SE", points);
+var walls = Grid.Builder.Parse(input, "SE", points);
 var (start, end) = (points[0], points[1]);
 
 Dictionary<Vector, int> dists =
