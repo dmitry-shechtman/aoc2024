@@ -1,9 +1,10 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.Globalization;
+using System.Text.RegularExpressions;
 
 Regex regex = new(@"^(Register \w: (?<reg>\d+)\n)+\nProgram: ((?<prg>[0-7]),)+(?<prg>[0-7])$");
 
 var input = File.ReadAllText("input.txt").Trim();
-var values = regex.GetAllValues<int>(input, ^2..);
+var values = regex.GetAllValues<int>(input, ^2.., CultureInfo.InvariantCulture);
 var reg = values["reg"];
 var prg = values["prg"];
 
@@ -16,9 +17,9 @@ string Part1() =>
 long Part2()
 {
     long a = 0L, b = reg[1], c = reg[2];
-    for (int i = 0; i < prg.Length; i++)
+    for (int i = 1; i <= prg.Length; i++)
         for (a <<= 3; ; ++a)
-            if (Run(a, b, c)[..(i + 1)].SequenceEqual(prg[^(i + 1)..]))
+            if (Run(a, b, c)[..i].SequenceEqual(prg.AsSpan()[^i..]))
                 break;
     return a;
 }
@@ -46,5 +47,5 @@ ReadOnlySpan<int> Run(long a, long b, long c)
             _ => throw new()
         };
     }
-    return output[..length];
+    return output.AsSpan()[..length];
 }
