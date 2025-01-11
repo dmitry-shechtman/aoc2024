@@ -3,7 +3,7 @@
 Regex regex = new(@"^((?<k>[xy]\d\d): (?<v>0|1)\n)+(\n(?<a>[a-w]{3}|[xy]\d\d) (?<op>AND|OR|XOR) (?<b>[a-w]{3}|[xy]\d\d) -> (?<c>(z\d\d|[a-w]{3})))+$");
 
 var input = File.ReadAllText("input.txt").Trim();
-var vals = regex.GetAllValues(input);
+var vals = regex.GetAllValues(input, ^6..);
 
 var tuples = vals["c"]
     .Select((c, i) => (c, v: new Tuple(Enum.Parse<Op>(vals["op"][i]), vals["a"][i], vals["b"][i])))
