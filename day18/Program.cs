@@ -41,7 +41,7 @@ bool TryFindShortestPath(int index, out int dist)
 {
     Vector pos;
     balls.Clear();
-    points[..index].All(balls.Add);
+    _ = points.AsSpan()[..index].All(balls.Add);
     queue.Clear();
     queue.Enqueue(default, 1);
     while (queue.TryDequeue(out var pos0, out dist))
