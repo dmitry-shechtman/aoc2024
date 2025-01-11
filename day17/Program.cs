@@ -1,10 +1,9 @@
-﻿using System.Globalization;
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 
 Regex regex = new(@"^(Register \w: (?<reg>\d+)\n)+\nProgram: ((?<prg>[0-7]),)+(?<prg>[0-7])$");
 
 var input = File.ReadAllText("input.txt").Trim();
-var values = regex.GetAllValues<int>(input, ^2.., CultureInfo.InvariantCulture);
+var values = regex.GetAllValuesInvariant<int>(input, ^2..);
 var reg = values["reg"];
 var prg = values["prg"];
 
