@@ -3,48 +3,46 @@
 Regex regex = new(@"^(Register \w: (?<reg>\d+)\n)+\nProgram: ((?<prg>[0-7]),)+(?<prg>[0-7])$");
 
 var input = File.ReadAllText("input.txt").Trim();
-var values = regex.GetValuesInvariant(input, int.Parse, ^2..);
-var reg = values[0];
-var prg = values[1];
+var groups = regex.Match(input).Groups;
+var reg = groups[^2].GetValuesInvariant(long.Parse);
+var prg = groups[^1].GetValuesInvariant(int.Parse);
+var val = new[] { 0L, 1, 2, 3, 0, 0, 0 };
+var output = new int[prg.Length];
 
 Console.WriteLine(Part1());
 Console.WriteLine(Part2());
 
 string Part1() =>
-    string.Join(',', Run(reg[0], reg[1], reg[2]).ToArray());
+    string.Join(',', Run(prg.Length));
 
 long Part2()
 {
-    long a = 0L, b = reg[1], c = reg[2];
+    reg[0] = 0;
     for (int i = 1; i <= prg.Length; i++)
-        for (a <<= 3; ; ++a)
-            if (Run(a, b, c)[..i].SequenceEqual(prg.AsSpan()[^i..]))
+        for (reg[0] <<= 3; ; ++reg[0])
+            if (prg.AsSpan().EndsWith(Run(i)))
                 break;
-    return a;
+    return reg[0];
 }
 
-ReadOnlySpan<int> Run(long a, long b, long c)
+int[] Run(int max)
 {
     const int A = 4, B = 5, C = 6;
-    var output = new int[prg.Length];
     int ip = 0, length = 0, op, x, y;
-    var val = new[] { 0, 1, 2, 3, a, b, c };
-    while (ip < prg.Length)
+    reg.CopyTo(val, A);
+    while (ip < prg.Length && length < max)
     {
         (op, x) = (prg[ip++], prg[ip++]);
         y = (int)val[x];
         _ = op switch
         {
-            0 => val[A] >>= y,
             1 => val[B]  ^= x,
             2 => val[B]   = y & 7,
             4 => val[B]  ^= val[C],
-            6 => val[B]   = val[A] >> y,
-            7 => val[C]   = val[A] >> y,
             3 => ip = val[A] != 0 ? x : ip,
             5 => output[length++] = y & 7,
-            _ => throw new()
+            _ => val[op > 0 ? op - 1 : A] = val[A] >> y,
         };
     }
-    return output.AsSpan()[..length];
+    return output[..length];
 }
