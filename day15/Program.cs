@@ -110,9 +110,7 @@ void SetValue(Vector pos, int value) =>
 
 string GetString(Vector pos)
 {
-    char[] chars = new char[(range.Width + 1) * range.Height];
-    for (int y = 0, i = 0, j = 0; y < range.Height; y++, chars[j++] = '\n')
-        for (int x = 0; x < range.Width; x++, i++)
-            chars[j++] = pos == (x, y) ? '@' : ".[]O#"[grid[i]];
-    return new string(chars);
+    range.SetValue(grid, pos, cc.Length);
+    return MultiGrid.Builder.FromArray(grid, range)
+        .ToString("[]O#@");
 }

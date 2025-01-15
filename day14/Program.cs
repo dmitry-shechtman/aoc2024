@@ -1,4 +1,5 @@
 ﻿using aoc;
+using aoc.Grids;
 using System.Globalization;
 
 const int W = 101, H = 103, RUN = 10;
@@ -9,7 +10,8 @@ var input = File.ReadAllText("input.txt");
 var robots = Matrix.Rows.ParseAll(input, CultureInfo.InvariantCulture);
 
 Console.WriteLine(Part1());
-Console.WriteLine(Part2());
+Console.WriteLine(Part2(out var counts));
+Console.WriteLine(GetString(counts));
 
 int Part1() => robots
     .Select(Step100)
@@ -33,10 +35,10 @@ Vector4D GetQuadrant(Vector p) => p switch
     _ => default
 };
 
-int Part2()
+int Part2(out int[,] counts)
 {
     Span<Vector4D> qq = stackalloc Vector4D[robots.Length];
-    int[,] counts = new int[W, H + 1];
+    counts = new int[W, H + 1];
     int step, total, run, x, y, z, w, i;
     for (i = 0; i < robots.Length; ++i)
     {
@@ -65,11 +67,5 @@ int Part2()
     return step;
 }
 
-string GetString(int[,] counts)
-{
-    var chars = new char[(W + 1) * H];
-    for (int y = 0, i = 0; y < H; y++, chars[i++] = '\n')
-        for (int x = 0; x < W; x++)
-            chars[i++] = ".#"[counts[x, y]];
-    return new string(chars);
-}
+string GetString(int[,] counts) =>
+    Grid.Builder.FromArray(counts).ToString();
