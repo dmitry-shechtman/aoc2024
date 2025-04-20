@@ -26,14 +26,14 @@ int Part1() =>
 Vector[] FindShortestPath()
 {
     Vector pos;
-    PriorityQueue<QueueItem, int> queue = new();
-    queue.Enqueue(new(start, new[] { start }), 1);
-    while (queue.TryDequeue(out var item, out var dist))
+    PriorityQueue<Vector[], int> queue = new();
+    queue.Enqueue(new[] { start }, 1);
+    while (queue.TryDequeue(out var path, out var dist))
         foreach (var vec in Grid.Headings)
-            if (item.Pos == end)
-                return item.Path.ToArray();
-            else if (TryAdd(pos = item.Pos + vec, dist))
-                queue.Enqueue(new(pos, item.Path.Append(pos)), dist + 1);
+            if (path[^1] == end)
+                return path;
+            else if (TryAdd(pos = path[^1] + vec, dist))
+                queue.Enqueue(path.Append(pos).ToArray(), dist + 1);
     throw new InvalidOperationException();
 }
 
@@ -45,5 +45,3 @@ bool TryAdd(Vector pos, int dist)
     dists[pos] = dist;
     return true;
 }
-
-record struct QueueItem(Vector Pos, IEnumerable<Vector> Path);
