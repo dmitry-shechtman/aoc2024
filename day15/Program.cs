@@ -47,9 +47,9 @@ int Solve(Matrix even, Matrix odd, int left, int right)
         if (!TryAdd(pos + vec, vec))
             continue;
         foreach (var (box, _) in stack)
-            SetValue(box, NONE);
+            range.SetValue(grid, box, NONE);
         foreach (var (box, value) in stack)
-            SetValue(box + vec, value);
+            range.SetValue(grid, box + vec, value);
         pos += vec;
     }
     return GetScore();
@@ -61,18 +61,18 @@ void Init(Matrix even, Matrix odd, int left, int right)
     range = (range.Min * even, range.Max * odd);
     grid = new int[range.Length];
     foreach (var box in multi[WALL])
-        SetValue(box * even, WALL);
+        range.SetValue(grid, box * even, WALL);
     foreach (var box in multi[WALL])
-        SetValue(box * odd, WALL);
+        range.SetValue(grid, box * odd, WALL);
     foreach (var box in multi[BOX])
-        SetValue(box * even, left);
+        range.SetValue(grid, box * even, left);
     foreach (var box in multi[BOX])
-        SetValue(box * odd, right);
+        range.SetValue(grid, box * odd, right);
 }
 
 bool TryAdd(Vector pos, Vector vec)
 {
-    var value = GetValue(pos);
+    var value = range.GetValue(grid, pos);
     return value == NONE
         || (value != WALL
         && TryAdd(pos + vec, vec)
@@ -101,12 +101,6 @@ int GetScore()
                 total += Score.Dot((x, y));
     return total;
 }
-
-int GetValue(Vector pos) =>
-    grid[pos.y * range.Width + pos.x];
-
-void SetValue(Vector pos, int value) =>
-    grid[pos.y * range.Width + pos.x] = value;
 
 string GetString(Vector pos)
 {
